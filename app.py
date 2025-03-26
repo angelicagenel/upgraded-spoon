@@ -8,6 +8,7 @@ from google.cloud import storage
 from google.cloud import texttospeech
 from fuzzywuzzy import fuzz
 import uuid
+import io
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -17,19 +18,29 @@ app = Flask(__name__)
 
 # Configure Cloud Storage
 BUCKET_NAME = os.environ.get('BUCKET_NAME', 'spanish-pronunciation-tool-files')
-storage_client = storage.Client()
+try:
+    storage_client = storage.Client()
+    logger.info(f"Storage client initialized")
+except Exception as e:
+    logger.error(f"Error initializing storage client: {e}")
+    storage_client = None
 
 # Try to get the bucket, create it if it doesn't exist
+bucket = None
 try:
-    bucket = storage_client.get_bucket(BUCKET_NAME)
-    logger.info(f"Connected to bucket: {BUCKET_NAME}")
+    if storage_client:
+        try:
+            bucket = storage_client.get_bucket(BUCKET_NAME)
+            logger.info(f"Connected to bucket: {BUCKET_NAME}")
+        except Exception as e:
+            logger.error(f"Error getting bucket: {e}")
+            try:
+                bucket = storage_client.create_bucket(BUCKET_NAME)
+                logger.info(f"Bucket {BUCKET_NAME} created.")
+            except Exception as e:
+                logger.error(f"Error creating bucket: {e}")
 except Exception as e:
-    try:
-        bucket = storage_client.create_bucket(BUCKET_NAME)
-        logger.info(f"Bucket {BUCKET_NAME} created.")
-    except Exception as e:
-        logger.error(f"Error with bucket: {e}")
-        bucket = None
+    logger.error(f"Error with storage operations: {e}")
 
 # Create uploads folder for local testing
 UPLOAD_FOLDER = 'uploads'
@@ -37,6 +48,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Maximum file size (20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
+# Temporary storage for TTS audio files
+app.config['TTS_FILES'] = {}
 
 # Allowed audio file extensions
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'm4a', 'opus', 'webm', 'ogg'}
@@ -57,11 +71,14 @@ def load_dictionary():
         except FileNotFoundError:
             # If local file not found, try to load from Cloud Storage
             if bucket:
-                blob = bucket.blob('es_50k.txt')
-                if blob.exists():
-                    content = blob.download_as_string().decode('utf-8')
-                    words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
-                    return set(words)
+                try:
+                    blob = bucket.blob('es_50k.txt')
+                    if blob.exists():
+                        content = blob.download_as_string().decode('utf-8')
+                        words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
+                        return set(words)
+                except Exception as e:
+                    logger.error(f"Error loading dictionary from bucket: {e}")
             
             # Fallback to a small built-in dictionary
             logger.warning("Could not load dictionary file. Using minimal built-in dictionary.")
@@ -85,10 +102,13 @@ def load_references():
                 return json.load(f)
         except FileNotFoundError:
             if bucket:
-                blob = bucket.blob('references.json')
-                if blob.exists():
-                    content = blob.download_as_string().decode('utf-8')
-                    return json.loads(content)
+                try:
+                    blob = bucket.blob('references.json')
+                    if blob.exists():
+                        content = blob.download_as_string().decode('utf-8')
+                        return json.loads(content)
+                except Exception as e:
+                    logger.error(f"Error loading references from bucket: {e}")
             
             # Default references if file not found
             return {
@@ -112,46 +132,54 @@ logger.info(f"Dictionary loaded with {len(SPANISH_DICT)} words")
 # Transcribe audio using Google Cloud Speech-to-Text
 def transcribe_audio(audio_content):
     """Transcribe Spanish audio using Google Cloud Speech-to-Text"""
-    client = speech.SpeechClient()
-    audio = speech.RecognitionAudio(content=audio_content)
-    
-    # Try multiple configurations to increase success rate
-    configs = [
-        speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code="es-ES",
-            enable_automatic_punctuation=True
-        ),
-        speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
-            sample_rate_hertz=16000,
-            language_code="es-ES",
-            enable_automatic_punctuation=True
-        ),
-        speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
-            language_code="es-ES",
-            enable_automatic_punctuation=True
-        )
-    ]
-    
-    for config in configs:
-        try:
-            logger.info(f"Trying transcription with config: {config}")
-            response = client.recognize(config=config, audio=audio)
-            
-            if response.results:
-                transcript = " ".join(result.alternatives[0].transcript for result in response.results)
-                logger.info(f"Transcription successful: '{transcript}'")
-                return transcript
-            else:
-                logger.warning("No transcription results")
-        except Exception as e:
-            logger.error(f"Error in transcription with config {config}: {str(e)}")
-    
-    logger.error("All transcription attempts failed")
-    return ""
+    try:
+        client = speech.SpeechClient()
+        audio = speech.RecognitionAudio(content=audio_content)
+        
+        # Try multiple configurations to increase success rate
+        configs = [
+            speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
+                language_code="es-ES",
+                enable_automatic_punctuation=True
+            ),
+            speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                sample_rate_hertz=16000,
+                language_code="es-ES",
+                enable_automatic_punctuation=True
+            ),
+            speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+                language_code="es-ES",
+                enable_automatic_punctuation=True
+            ),
+            speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.MP3,
+                language_code="es-ES",
+                enable_automatic_punctuation=True
+            )
+        ]
+        
+        for config in configs:
+            try:
+                logger.info(f"Trying transcription with config: {config}")
+                response = client.recognize(config=config, audio=audio)
+                
+                if response.results:
+                    transcript = " ".join(result.alternatives[0].transcript for result in response.results)
+                    logger.info(f"Transcription successful: '{transcript}'")
+                    return transcript
+                else:
+                    logger.warning("No transcription results")
+            except Exception as e:
+                logger.error(f"Error in transcription with config {config}: {str(e)}")
+        
+        logger.error("All transcription attempts failed")
+        return ""
+    except Exception as e:
+        logger.error(f"Transcription failed: {e}")
+        return ""
 
 # Calculate pronunciation score when doing free speech
 def assess_free_speech(transcribed_text):
@@ -455,26 +483,34 @@ def generate_tts_feedback(text, level):
         # Generate a unique filename
         filename = f"tts_{uuid.uuid4()}.mp3"
         
-        # If we have a bucket, upload to Cloud Storage
-        if bucket:
-            blob = bucket.blob(f"tts/{filename}")
-            blob.upload_from_bytes(response.audio_content, content_type='audio/mpeg')
-            
-            # Create a signed URL that will be valid for 1 hour
-            url = blob.generate_signed_url(
-                version="v4",
-                expiration=3600,  # 1 hour
-                method="GET"
-            )
+        # Store audio in bucket or in memory
+        try:
+            if bucket:
+                # Upload to Cloud Storage
+                blob = bucket.blob(f"tts/{filename}")
+                blob.upload_from_bytes(response.audio_content, content_type='audio/mpeg')
+                
+                # Create a signed URL that will be valid for 1 hour
+                url = blob.generate_signed_url(
+                    version="v4",
+                    expiration=3600,  # 1 hour
+                    method="GET"
+                )
+                logger.info(f"TTS audio stored in bucket, URL: {url}")
+                return url
+            else:
+                # Store in memory dictionary
+                app.config['TTS_FILES'][filename] = response.audio_content
+                url = url_for('get_tts_audio', filename=filename, _external=True)
+                logger.info(f"TTS audio stored in memory, URL: {url}")
+                return url
+        except Exception as e:
+            logger.error(f"Error storing TTS audio: {e}")
+            # Fallback - store in memory even if bucket exists but has issues
+            app.config['TTS_FILES'][filename] = response.audio_content
+            url = url_for('get_tts_audio', filename=filename, _external=True)
+            logger.info(f"TTS audio stored in memory (fallback), URL: {url}")
             return url
-        else:
-            # Save to a temporary file and return its path
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            temp_file.write(response.audio_content)
-            temp_file.close()
-            app.config[f'TTS_FILE_{filename}'] = temp_file.name
-            return url_for('get_tts_audio', filename=filename, _external=True)
-            
     except Exception as e:
         logger.error(f"Error generating TTS: {e}")
         return None
@@ -509,9 +545,11 @@ def process_audio():
             logger.error("Empty filename in request")
             return jsonify({"error": "No selected file"}), 400
         
-        if not allowed_file(file.filename):
-            logger.error(f"Invalid file type: {file.filename}")
-            return jsonify({"error": "Invalid file type. Please upload .wav, .mp3, .m4a, .opus, .webm, or .ogg"}), 400
+        # Handle the file extension check properly
+        filename = file.filename
+        if not ('.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS):
+            logger.error(f"Invalid file type: {filename}")
+            return jsonify({"error": f"Invalid file type. Please upload .wav, .mp3, .m4a, .opus, .webm, or .ogg"}), 400
         
         # Check if this is a practice mode assessment
         practice_level = request.form.get('practice_level', None)
@@ -574,12 +612,22 @@ def process_audio():
 
 @app.route('/get-tts-audio/<filename>')
 def get_tts_audio(filename):
-    """Serve TTS audio files from local storage"""
-    file_path = app.config.get(f'TTS_FILE_{filename}')
-    if not file_path:
-        return "Audio file not found", 404
-    
-    return send_file(file_path, mimetype='audio/mpeg')
+    """Serve TTS audio files from memory"""
+    try:
+        if filename in app.config['TTS_FILES']:
+            audio_data = app.config['TTS_FILES'][filename]
+            return send_file(
+                io.BytesIO(audio_data),
+                mimetype='audio/mpeg',
+                as_attachment=True,
+                download_name=f"{filename}"
+            )
+        else:
+            logger.error(f"TTS audio file not found: {filename}")
+            return "Audio file not found", 404
+    except Exception as e:
+        logger.error(f"Error serving TTS audio: {e}")
+        return f"Error serving audio: {str(e)}", 500
 
 @app.route('/references')
 def get_references():
