@@ -63,4 +63,4 @@ gcloud run deploy spanish-pronunciation-tool \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars="BUCKET_NAME=your-unique-bucket-name"
+  --set-env-vars="BUCKET_NAME=spanish-pronunciation-tool-files"
