@@ -31,6 +31,10 @@ except Exception as e:
         logger.error(f"Error with bucket: {e}")
         bucket = None
 
+# Create uploads folder for local testing
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # Maximum file size (20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
@@ -116,16 +120,19 @@ def transcribe_audio(audio_content):
         speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
             sample_rate_hertz=16000,
-            language_code="es-ES"
+            language_code="es-ES",
+            enable_automatic_punctuation=True
         ),
         speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
             sample_rate_hertz=16000,
-            language_code="es-ES"
+            language_code="es-ES",
+            enable_automatic_punctuation=True
         ),
         speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
-            language_code="es-ES"
+            language_code="es-ES",
+            enable_automatic_punctuation=True
         )
     ]
     
@@ -145,6 +152,54 @@ def transcribe_audio(audio_content):
     
     logger.error("All transcription attempts failed")
     return ""
+
+# Calculate pronunciation score when doing free speech
+def assess_free_speech(transcribed_text):
+    """
+    Evaluate pronunciation using ACTFL FACT criteria for free speech mode
+    """
+    return actfl_assessment(transcribed_text)
+
+# Calculate pronunciation score when practicing with reference phrases
+def assess_practice_phrase(transcribed_text, reference_level):
+    """
+    Evaluate pronunciation with reference to a specific practice phrase
+    """
+    if reference_level not in REFERENCES:
+        return actfl_assessment(transcribed_text)
+    
+    reference_text = REFERENCES[reference_level]
+    
+    # Compare transcribed text with reference text
+    similarity_score = fuzz.token_sort_ratio(transcribed_text.lower(), reference_text.lower())
+    
+    # Get a base assessment
+    base_assessment = actfl_assessment(transcribed_text)
+    
+    # Adjust score based on similarity to reference
+    similarity_bonus = (similarity_score - 60) * 0.2 if similarity_score > 60 else 0
+    adjusted_score = min(100, base_assessment["score"] + similarity_bonus)
+    
+    # Create a new assessment with adjusted scores
+    assessment = {
+        "score": round(adjusted_score, 1),
+        "level": base_assessment["level"],
+        "reference_text": reference_text,
+        "similarity": similarity_score,
+        "feedback": base_assessment["feedback"],
+        "strengths": base_assessment["strengths"],
+        "areas_for_improvement": base_assessment["areas_for_improvement"]
+    }
+    
+    # Add reference-specific feedback
+    if similarity_score < 50:
+        assessment["areas_for_improvement"].insert(0, "Your response differed significantly from the reference phrase")
+    elif similarity_score < 75:
+        assessment["areas_for_improvement"].insert(0, "Try to follow the reference phrase more closely")
+    else:
+        assessment["strengths"].insert(0, "Good reproduction of the reference phrase")
+    
+    return assessment
 
 # Calculate pronunciation score based on ACTFL FACT criteria
 def actfl_assessment(transcribed_text):
@@ -345,16 +400,21 @@ def generate_corrected_text(transcribed_text):
     """Generate grammatically corrected version of the transcribed text"""
     # This is a simplified version that just returns the transcribed text
     # In a full implementation, you would use a grammar correction model or service
-    # For now, we're just returning the original text
+    # For now, we're just implementing some basic corrections
     
     # Simple corrections for common errors
     corrections = {
-        "yo soy": "yo soy",
         "tu eres": "tú eres",
         "el es": "él es",
-        "ella es": "ella es",
-        "yo tengo": "yo tengo",
-        "tu tienes": "tú tienes"
+        "ella esta": "ella está",
+        "tu tienes": "tú tienes",
+        "yo quero": "yo quiero",
+        "buenes dias": "buenos días",
+        "como esta": "cómo está",
+        "como estas": "cómo estás",
+        "gracias por tu ayudar": "gracias por tu ayuda",
+        "no problemo": "no hay problema",
+        "yo no se": "yo no sé"
     }
     
     corrected = transcribed_text
@@ -453,6 +513,9 @@ def process_audio():
             logger.error(f"Invalid file type: {file.filename}")
             return jsonify({"error": "Invalid file type. Please upload .wav, .mp3, .m4a, .opus, .webm, or .ogg"}), 400
         
+        # Check if this is a practice mode assessment
+        practice_level = request.form.get('practice_level', None)
+        
         # Process in memory
         audio_content = file.read()
         logger.info(f"Received audio file of size: {len(audio_content)} bytes")
@@ -471,18 +534,23 @@ def process_audio():
                 "areas_for_improvement": ["Speak clearly in Spanish", "Check your microphone"]
             })
         
-        # Calculate ACTFL-aligned score
-        assessment = actfl_assessment(spoken_text)
-        
-        # Generate corrected text
-        corrected_text = generate_corrected_text(spoken_text)
+        # Calculate assessment based on mode
+        if practice_level and practice_level in REFERENCES:
+            # Practice mode with reference phrase
+            assessment = assess_practice_phrase(spoken_text, practice_level)
+            corrected_text = REFERENCES[practice_level]  # Use reference as corrected text
+            logger.info(f"Practice mode assessment: level={practice_level}, score={assessment['score']}")
+        else:
+            # Free speech mode
+            assessment = assess_free_speech(spoken_text)
+            corrected_text = generate_corrected_text(spoken_text)
+            logger.info(f"Free speech assessment: level={assessment['level']}, score={assessment['score']}")
         
         # Generate TTS feedback
         tts_url = generate_tts_feedback(corrected_text, assessment['level'])
         
-        logger.info(f"Processing complete: level={assessment['level']}, score={assessment['score']}, text='{spoken_text}'")
-        
-        return jsonify({
+        # Prepare response
+        response = {
             "score": assessment['score'],
             "level": assessment['level'],
             "transcribed_text": spoken_text,
@@ -491,7 +559,15 @@ def process_audio():
             "strengths": assessment['strengths'],
             "areas_for_improvement": assessment['areas_for_improvement'],
             "tts_audio_url": tts_url
-        })
+        }
+        
+        # Add practice-specific fields if applicable
+        if practice_level and 'reference_text' in assessment:
+            response["reference_text"] = assessment['reference_text']
+            response["similarity"] = assessment['similarity']
+        
+        return jsonify(response)
+            
     except Exception as e:
         logger.error(f"Error processing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
