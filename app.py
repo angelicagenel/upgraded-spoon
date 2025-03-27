@@ -451,13 +451,9 @@ def generate_corrected_text(transcribed_text):
     
     return corrected
 
-# Improved TTS generation function with better logging and error handling
 def generate_tts_feedback(text, level):
     """Generate Text-to-Speech audio feedback in Spanish"""
     try:
-        # Log the text being processed
-        logger.info(f"Generating TTS for text: '{text}' with level: '{level}'")
-        
         # Initialize Text-to-Speech client
         client = texttospeech.TextToSpeechClient()
         
@@ -480,19 +476,17 @@ def generate_tts_feedback(text, level):
         )
         
         # Perform the text-to-speech request
-        logger.info("Sending request to Google TTS service")
         response = client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
-        logger.info(f"TTS response received, audio content size: {len(response.audio_content)} bytes")
         
         # Generate a unique filename
         filename = f"tts_{uuid.uuid4()}.mp3"
         
-        # Store the TTS audio and return an appropriate URL
+        # Store audio in bucket or in memory
         try:
             if bucket:
-                logger.info(f"Uploading TTS audio to bucket: {BUCKET_NAME}")
+                # Upload to Cloud Storage
                 blob = bucket.blob(f"tts/{filename}")
                 blob.upload_from_bytes(response.audio_content, content_type='audio/mpeg')
                 
@@ -504,91 +498,22 @@ def generate_tts_feedback(text, level):
                 )
                 logger.info(f"TTS audio stored in bucket, URL: {url}")
                 return url
+            else:
+                # Store in memory dictionary
+                app.config['TTS_FILES'][filename] = response.audio_content
+                url = url_for('get_tts_audio', filename=filename, _external=True)
+                logger.info(f"TTS audio stored in memory, URL: {url}")
+                return url
         except Exception as e:
-            logger.error(f"Error storing TTS in bucket: {e}")
-        
-        # If bucket storage fails or is not available, store in memory
-        logger.info("Storing TTS audio in memory")
-        if 'TTS_FILES' not in app.config:
-            app.config['TTS_FILES'] = {}
-            
-        app.config['TTS_FILES'][filename] = response.audio_content
-        url = url_for('get_tts_audio', filename=filename, _external=True)
-        logger.info(f"TTS audio stored in memory, URL: {url}")
-        return url
-            
+            logger.error(f"Error storing TTS audio: {e}")
+            # Fallback - store in memory even if bucket exists but has issues
+            app.config['TTS_FILES'][filename] = response.audio_content
+            url = url_for('get_tts_audio', filename=filename, _external=True)
+            logger.info(f"TTS audio stored in memory (fallback), URL: {url}")
+            return url
     except Exception as e:
         logger.error(f"Error generating TTS: {e}")
         return None
-
-# Improved route for serving TTS audio files
-@app.route('/get-tts-audio/<filename>')
-def get_tts_audio(filename):
-    """Serve TTS audio files from memory"""
-    try:
-        logger.info(f"Request received for TTS audio: {filename}")
-        
-        if 'TTS_FILES' in app.config and filename in app.config['TTS_FILES']:
-            logger.info(f"Found TTS audio in memory: {filename}")
-            audio_data = app.config['TTS_FILES'][filename]
-            
-            # Create a BytesIO object from the audio data
-            audio_io = io.BytesIO(audio_data)
-            audio_io.seek(0)
-            
-            logger.info(f"Sending TTS audio file: {filename}, size: {len(audio_data)} bytes")
-            
-            response = send_file(
-                audio_io,
-                mimetype='audio/mpeg',
-                as_attachment=False
-            )
-            
-            # Add headers to prevent caching issues
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
-            
-            return response
-        else:
-            logger.error(f"TTS audio not found in memory: {filename}")
-            
-            # Try to get from bucket if available
-            if bucket:
-                try:
-                    logger.info(f"Trying to fetch from bucket: {filename}")
-                    blob = bucket.blob(f"tts/{filename}")
-                    if blob.exists():
-                        audio_data = blob.download_as_bytes()
-                        audio_io = io.BytesIO(audio_data)
-                        audio_io.seek(0)
-                        
-                        # Also store in memory for future requests
-                        if 'TTS_FILES' not in app.config:
-                            app.config['TTS_FILES'] = {}
-                        app.config['TTS_FILES'][filename] = audio_data
-                        
-                        logger.info(f"Sending TTS audio from bucket: {filename}")
-                        
-                        response = send_file(
-                            audio_io,
-                            mimetype='audio/mpeg',
-                            as_attachment=False
-                        )
-                        
-                        # Add headers to prevent caching issues
-                        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                        response.headers['Pragma'] = 'no-cache'
-                        response.headers['Expires'] = '0'
-                        
-                        return response
-                except Exception as e:
-                    logger.error(f"Error fetching from bucket: {e}")
-            
-            return "Audio file not found", 404
-    except Exception as e:
-        logger.error(f"Error serving TTS audio: {e}")
-        return f"Error serving audio: {str(e)}", 500
 
 # Flask routes
 @app.route('/')
@@ -685,6 +610,25 @@ def process_audio():
         logger.error(f"Error processing audio: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/get-tts-audio/<filename>')
+def get_tts_audio(filename):
+    """Serve TTS audio files from memory"""
+    try:
+        if filename in app.config['TTS_FILES']:
+            audio_data = app.config['TTS_FILES'][filename]
+            return send_file(
+                io.BytesIO(audio_data),
+                mimetype='audio/mpeg',
+                as_attachment=True,
+                download_name=f"{filename}"
+            )
+        else:
+            logger.error(f"TTS audio file not found: {filename}")
+            return "Audio file not found", 404
+    except Exception as e:
+        logger.error(f"Error serving TTS audio: {e}")
+        return f"Error serving audio: {str(e)}", 500
+
 @app.route('/references')
 def get_references():
     """Serves the reference phrases for practice"""
@@ -699,4 +643,4 @@ def get_references():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
