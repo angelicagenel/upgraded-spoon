@@ -144,26 +144,6 @@
             display: none;
         }
         
-        .practice-section {
-            background-color: var(--color-primary-light);
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .practice-title {
-            color: var(--color-teal-dark);
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .practice-phrase {
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -190,10 +170,7 @@
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs" id="recordingTabs">
                     <li class="nav-item">
-                        <a class="nav-link active" id="recordTab" data-bs-toggle="tab" href="#record">Free Speech</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="practiceTab" data-bs-toggle="tab" href="#practice">Practice Phrases</a>
+                        <a class="nav-link active" id="recordTab" data-bs-toggle="tab" href="#record">Record Speech</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="uploadTab" data-bs-toggle="tab" href="#upload">Upload File</a>
@@ -203,7 +180,50 @@
             <div class="card-body">
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="record">
-                        <p>Speak freely in Spanish to get a pronunciation assessment (up to 3 minutes)</p>
+                        <p>Speak freely in Spanish to get a pronunciation assessment <strong>(minimum 1 minute, maximum 3 minutes)</strong></p>
+                        
+                        <div class="mb-4">
+                            <p class="text-center mb-2"><em>Need inspiration? Click on a level below for prompt ideas:</em></p>
+                            <div class="accordion" id="promptAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                            Beginner: Introducing Yourself
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#promptAccordion">
+                                        <div class="accordion-body">
+                                            <p><em>Háblame de ti mismo/a. ¿Cómo te llamas? ¿De dónde eres? ¿Cuántos años tienes? ¿Qué te gusta hacer en tu tiempo libre? ¿Tienes mascotas? Describe tu familia.</em></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                            Intermediate: Your Daily Routine
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#promptAccordion">
+                                        <div class="accordion-body">
+                                            <p><em>Describe tu rutina diaria. ¿A qué hora te despiertas? ¿Qué desayunas normalmente? ¿Cómo vas al trabajo o a la escuela? Explica lo que haces durante el día, tus responsabilidades y cómo te relajas por la noche.</em></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                            Advanced: Your Opinion on Technology
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#promptAccordion">
+                                        <div class="accordion-body">
+                                            <p><em>Expresa tu opinión sobre la tecnología moderna. ¿Cómo ha cambiado la forma en que vivimos? ¿Crees que la inteligencia artificial tendrá un impacto positivo o negativo en nuestra sociedad? Explica los beneficios y desafíos de vivir en un mundo cada vez más conectado digitalmente.</em></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="text-center">
                             <button id="recordButton" class="btn btn-record">
                                 <i class="bi bi-mic"></i> Start Recording
@@ -214,35 +234,6 @@
                         <div id="audioPreview" class="mt-3" style="display: none;">
                             <h6>Preview:</h6>
                             <audio id="recordedAudio" controls class="w-100"></audio>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="practice">
-                        <p>Practice your pronunciation with these example phrases:</p>
-                        <div class="practice-section mb-3">
-                            <div class="practice-title">Beginner</div>
-                            <div class="practice-phrase" id="beginnerPhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="beginner">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div class="practice-section mb-3">
-                            <div class="practice-title">Intermediate</div>
-                            <div class="practice-phrase" id="intermediatePhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="intermediate">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div class="practice-section">
-                            <div class="practice-title">Advanced</div>
-                            <div class="practice-phrase" id="advancedPhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="advanced">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div id="practiceAudioPreview" class="mt-3" style="display: none;">
-                            <h6>Preview:</h6>
-                            <audio id="practiceRecordedAudio" controls class="w-100"></audio>
                         </div>
                     </div>
                     
@@ -354,8 +345,8 @@
             const selectedFile = document.getElementById('selectedFile');
             const audioPreview = document.getElementById('audioPreview');
             const recordedAudio = document.getElementById('recordedAudio');
-            const practiceAudioPreview = document.getElementById('practiceAudioPreview');
-            const practiceRecordedAudio = document.getElementById('practiceRecordedAudio');
+            
+            // Practice-related elements removed
 
             let mediaRecorder;
             let audioChunks = [];
@@ -364,19 +355,8 @@
             let timerInterval;
             let selectedAudioFile = null;
             let audioURL = null;
-            let activePracticeButton = null;
 
-            // Load reference phrases
-            fetch('/references')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('beginnerPhrase').textContent = data.beginner;
-                    document.getElementById('intermediatePhrase').textContent = data.intermediate;
-                    document.getElementById('advancedPhrase').textContent = data.advanced;
-                })
-                .catch(error => {
-                    console.error('Error loading reference phrases:', error);
-                });
+            // No longer loading reference phrases as practice tab has been removed
 
             // Switch tabs
             document.querySelectorAll('#recordingTabs a').forEach(tab => {
@@ -392,10 +372,8 @@
                         submitButton.disabled = !recording && !audioURL;
                         selectedFile.textContent = '';
                         selectedAudioFile = null;
-                    } else if (this.id === 'practiceTab') {
-                        submitButton.disabled = !selectedAudioFile;
-                        if (recording) stopRecording();
                     } else {
+                        // Upload tab
                         submitButton.disabled = !selectedAudioFile;
                         if (recording) stopRecording();
                     }
@@ -436,36 +414,7 @@
                 submitButton.disabled = false;
             }
 
-            // Practice recording buttons
-            const practiceRecordButtons = document.querySelectorAll('.practice-record-btn');
-            
-            practiceRecordButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    if (recording) {
-                        stopRecording();
-                    } else {
-                        // Clear any previous recording
-                        selectedAudioFile = null;
-                        audioURL = null;
-                        
-                        // Set active button
-                        activePracticeButton = this;
-                        const level = this.getAttribute('data-level');
-                        
-                        // Start recording
-                        startPracticeRecording();
-                    }
-                });
-            });
-            
-            function startPracticeRecording() {
-                if (activePracticeButton) {
-                    activePracticeButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
-                    activePracticeButton.classList.add('recording');
-                }
-                
-                startRecording();
-            }
+            // Practice recording buttons removed
 
             // Recording
             recordButton.addEventListener('click', () => {
@@ -492,29 +441,21 @@
                         }
                         audioURL = URL.createObjectURL(audioBlob);
                         
-                        // Show audio in the appropriate preview based on active tab
-                        if (activePracticeButton) {
-                            practiceRecordedAudio.src = audioURL;
-                            practiceAudioPreview.style.display = 'block';
-                        } else {
-                            recordedAudio.src = audioURL;
-                            audioPreview.style.display = 'block';
-                        }
+                        // Show audio in the preview
+                        recordedAudio.src = audioURL;
+                        audioPreview.style.display = 'block';
                         
                         submitButton.disabled = false;
                     });
                     mediaRecorder.start();
                     recording = true;
                     
-                    // Update record button if not in practice mode
-                    if (!activePracticeButton) {
-                        recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
-                        recordButton.classList.add('recording');
-                    }
+                    // Reset record button
+                    recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
+                    recordButton.classList.add('recording');
                     
                     recordingStatus.textContent = 'Recording...';
                     audioPreview.style.display = 'none';
-                    practiceAudioPreview.style.display = 'none';
                     recordingTime = 0;
                     recordingTimer.style.display = 'block';
                     timerInterval = setInterval(updateTimer, 1000);
@@ -537,15 +478,9 @@
                     mediaRecorder.stream.getTracks().forEach(track => track.stop());
                     recording = false;
                     
-                    // Reset record button if not in practice mode
-                    if (!activePracticeButton) {
-                        recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
-                        recordButton.classList.remove('recording');
-                    } else {
-                        // Reset practice button
-                        activePracticeButton.innerHTML = '<i class="bi bi-mic"></i> Record';
-                        activePracticeButton.classList.remove('recording');
-                    }
+                    // Reset record button
+                    recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
+                    recordButton.classList.remove('recording');
                     
                     recordingStatus.textContent = 'Recording stopped.';
                     clearInterval(timerInterval);
@@ -571,12 +506,6 @@
 
                 const formData = new FormData();
                 formData.append('file', selectedAudioFile);
-                
-                // Add reference info if practicing with a specific phrase
-                if (activePracticeButton) {
-                    const level = activePracticeButton.getAttribute('data-level');
-                    formData.append('practice_level', level);
-                }
 
                 fetch('/process-audio', {
                     method: 'POST',
@@ -639,12 +568,10 @@
             newRecordingButton.addEventListener('click', () => {
                 resultContainer.style.display = 'none';
                 audioPreview.style.display = 'none';
-                practiceAudioPreview.style.display = 'none';
                 recordingStatus.textContent = '';
                 selectedFile.textContent = '';
                 submitButton.disabled = true;
                 selectedAudioFile = null;
-                activePracticeButton = null;
                 if (audioURL) {
                     URL.revokeObjectURL(audioURL);
                     audioURL = null;
