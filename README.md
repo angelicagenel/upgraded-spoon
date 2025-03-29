@@ -17,6 +17,7 @@ An AI-powered web application that provides feedback on Spanish pronunciation us
 - **AI Services**: 
   - Google Cloud Speech-to-Text for transcription
   - Google Cloud Text-to-Speech for feedback
+  - **License**: This project is licensed under the MIT License.
 - **Deployment**: Google Cloud Run
 
 ## Deployment to Google Cloud Run
@@ -64,5 +65,3 @@ gcloud run deploy spanish-pronunciation-tool \
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars="BUCKET_NAME=spanish-pronunciation-tool-files"
-
-This project is licensed under the MIT License - see the LICENSE file for details.
