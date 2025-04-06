@@ -144,24 +144,85 @@
             display: none;
         }
         
-        .practice-section {
+        /* Style for the recording tip banner */
+        .recording-tip {
             background-color: var(--color-primary-light);
             border-radius: 5px;
-            padding: 15px;
+            padding: 10px;
             margin-bottom: 15px;
+            text-align: center;
+            color: var(--color-accent);
+            font-weight: 500;
         }
         
-        .practice-title {
-            color: var(--color-teal-dark);
+        /* Style for the prompt section */
+        .prompt-section {
+            background-color: var(--color-primary-light);
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .prompt-title {
+            color: var(--color-accent);
             font-weight: bold;
             margin-bottom: 10px;
         }
         
-        .practice-phrase {
-            background-color: white;
-            padding: 10px;
+        .prompt-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .prompt-link {
+            padding: 5px 15px;
+            background-color: var(--color-secondary);
+            color: white;
+            text-decoration: none;
             border-radius: 5px;
-            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .prompt-link:hover {
+            background-color: var(--color-accent);
+            text-decoration: none;
+            color: white;
+        }
+        
+        /* Modal for prompts */
+        .prompt-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .prompt-modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+        }
+        
+        .close-modal {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .example-text {
+            background-color: var(--color-primary-light);
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
         }
         
         @keyframes pulse {
@@ -190,10 +251,7 @@
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs" id="recordingTabs">
                     <li class="nav-item">
-                        <a class="nav-link active" id="recordTab" data-bs-toggle="tab" href="#record">Free Speech</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="practiceTab" data-bs-toggle="tab" href="#practice">Practice Phrases</a>
+                        <a class="nav-link active" id="recordTab" data-bs-toggle="tab" href="#record">Record Speech</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="uploadTab" data-bs-toggle="tab" href="#upload">Upload File</a>
@@ -201,9 +259,25 @@
                 </ul>
             </div>
             <div class="card-body">
+                <!-- Prompt Section - Added as per REQUEST #2 -->
+                <div class="prompt-section">
+                    <p class="prompt-title">Need inspiration? Click a level below for a prompt text:</p>
+                    <div class="prompt-links">
+                        <a href="#" class="prompt-link" data-level="beginner">Beginner</a>
+                        <a href="#" class="prompt-link" data-level="intermediate">Intermediate</a>
+                        <a href="#" class="prompt-link" data-level="advanced">Advanced</a>
+                    </div>
+                </div>
+                
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="record">
-                        <p>Speak freely in Spanish to get a pronunciation assessment (up to 3 minutes)</p>
+                        <p>Speak freely in Spanish to get a pronunciation assessment.</p>
+                        
+                        <!-- Recording Tip Banner - Added as per REQUEST #1 -->
+                        <div class="recording-tip">
+                            <i class="bi bi-info-circle"></i> For more accurate results, record no less than 25 seconds and up to 3 minutes.
+                        </div>
+                        
                         <div class="text-center">
                             <button id="recordButton" class="btn btn-record">
                                 <i class="bi bi-mic"></i> Start Recording
@@ -214,35 +288,6 @@
                         <div id="audioPreview" class="mt-3" style="display: none;">
                             <h6>Preview:</h6>
                             <audio id="recordedAudio" controls class="w-100"></audio>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="practice">
-                        <p>Practice your pronunciation with these example phrases:</p>
-                        <div class="practice-section mb-3">
-                            <div class="practice-title">Beginner</div>
-                            <div class="practice-phrase" id="beginnerPhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="beginner">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div class="practice-section mb-3">
-                            <div class="practice-title">Intermediate</div>
-                            <div class="practice-phrase" id="intermediatePhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="intermediate">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div class="practice-section">
-                            <div class="practice-title">Advanced</div>
-                            <div class="practice-phrase" id="advancedPhrase">Loading...</div>
-                            <button class="btn btn-sm btn-record practice-record-btn" data-level="advanced">
-                                <i class="bi bi-mic"></i> Record
-                            </button>
-                        </div>
-                        <div id="practiceAudioPreview" class="mt-3" style="display: none;">
-                            <h6>Preview:</h6>
-                            <audio id="practiceRecordedAudio" controls class="w-100"></audio>
                         </div>
                     </div>
                     
@@ -326,6 +371,79 @@
         </div>
     </div>
 
+    <!-- Prompt Modals - Added as per REQUEST #3 -->
+    <div id="beginnerPromptModal" class="prompt-modal">
+        <div class="prompt-modal-content">
+            <span class="close-modal">&times;</span>
+            <h4>Beginner Prompt</h4>
+            <p><strong>Topic: Introduce Yourself</strong></p>
+            <p>Talk about yourself in Spanish. Try to include:</p>
+            <ul>
+                <li>Your name and where you're from</li>
+                <li>Your age and occupation</li>
+                <li>What languages you speak</li>
+                <li>Your hobbies or interests</li>
+            </ul>
+            <h5>Example:</h5>
+            <p class="example-text">
+                Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. 
+                Hablo inglés y estoy aprendiendo español. Me gusta leer, cocinar, y pasar tiempo con mis amigos.
+            </p>
+        </div>
+    </div>
+
+    <div id="intermediatePromptModal" class="prompt-modal">
+        <div class="prompt-modal-content">
+            <span class="close-modal">&times;</span>
+            <h4>Intermediate Prompt</h4>
+            <p><strong>Topic: Describe Your Day</strong></p>
+            <p>Talk about your typical day or what you did yesterday. Try to include:</p>
+            <ul>
+                <li>Your morning routine</li>
+                <li>Activities you did</li>
+                <li>People you met</li>
+                <li>How you felt</li>
+            </ul>
+            <h5>Example:</h5>
+            <p class="example-text">
+                Ayer me desperté a las siete de la mañana. Primero, tomé un café y desayuné con mi familia.
+                Después, fui a trabajar en autobús. Tuve una reunión importante con mis colegas sobre un nuevo proyecto.
+                Por la tarde, almorcé con mi amigo Juan en un restaurante cerca de la oficina. La comida estaba deliciosa.
+                Regresé a casa a las seis y cené con mi familia. Estaba cansado pero contento.
+            </p>
+        </div>
+    </div>
+
+    <div id="advancedPromptModal" class="prompt-modal">
+        <div class="prompt-modal-content">
+            <span class="close-modal">&times;</span>
+            <h4>Advanced Prompt</h4>
+            <p><strong>Topic: Opinion on Technology and Education</strong></p>
+            <p>Share your thoughts on how technology affects education. Consider:</p>
+            <ul>
+                <li>Benefits and challenges of technology in learning</li>
+                <li>Your personal experiences with online education</li>
+                <li>How you think education will change in the future</li>
+                <li>Recommendations for better integration of technology in schools</li>
+            </ul>
+            <h5>Example:</h5>
+            <p class="example-text">
+                En mi opinión, la tecnología ha transformado completamente el panorama educativo en las últimas décadas.
+                Por un lado, ofrece herramientas increíbles que facilitan el acceso al conocimiento y permiten experiencias
+                de aprendizaje personalizadas. Los estudiantes pueden aprender a su propio ritmo y acceder a recursos que antes
+                eran imposibles de obtener.<br><br>
+                
+                Sin embargo, también presenta desafíos significativos. La dependencia excesiva de las pantallas puede afectar
+                la concentración y las habilidades sociales. Además, no todos los estudiantes tienen el mismo acceso a la tecnología,
+                lo que puede aumentar la desigualdad educativa.<br><br>
+                
+                Basado en mi experiencia personal con cursos en línea, creo que el futuro de la educación será un modelo híbrido
+                que combine lo mejor de la enseñanza tradicional con las ventajas de la tecnología. Las instituciones educativas
+                deberían invertir en capacitación docente para aprovechar al máximo estas herramientas.
+            </p>
+        </div>
+    </div>
+
     <footer class="mt-4">
         <p>© 2025 Spanish Learning Edge LLC</p>
     </footer>
@@ -354,8 +472,13 @@
             const selectedFile = document.getElementById('selectedFile');
             const audioPreview = document.getElementById('audioPreview');
             const recordedAudio = document.getElementById('recordedAudio');
-            const practiceAudioPreview = document.getElementById('practiceAudioPreview');
-            const practiceRecordedAudio = document.getElementById('practiceRecordedAudio');
+            
+            // Prompt modal elements
+            const beginnerPromptModal = document.getElementById('beginnerPromptModal');
+            const intermediatePromptModal = document.getElementById('intermediatePromptModal');
+            const advancedPromptModal = document.getElementById('advancedPromptModal');
+            const promptLinks = document.querySelectorAll('.prompt-link');
+            const closeModalButtons = document.querySelectorAll('.close-modal');
 
             let mediaRecorder;
             let audioChunks = [];
@@ -364,19 +487,43 @@
             let timerInterval;
             let selectedAudioFile = null;
             let audioURL = null;
-            let activePracticeButton = null;
 
-            // Load reference phrases
-            fetch('/references')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('beginnerPhrase').textContent = data.beginner;
-                    document.getElementById('intermediatePhrase').textContent = data.intermediate;
-                    document.getElementById('advancedPhrase').textContent = data.advanced;
-                })
-                .catch(error => {
-                    console.error('Error loading reference phrases:', error);
+            // Prompt modal functionality
+            promptLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const level = this.getAttribute('data-level');
+                    
+                    if (level === 'beginner') {
+                        beginnerPromptModal.style.display = 'block';
+                    } else if (level === 'intermediate') {
+                        intermediatePromptModal.style.display = 'block';
+                    } else if (level === 'advanced') {
+                        advancedPromptModal.style.display = 'block';
+                    }
                 });
+            });
+
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    beginnerPromptModal.style.display = 'none';
+                    intermediatePromptModal.style.display = 'none';
+                    advancedPromptModal.style.display = 'none';
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === beginnerPromptModal) {
+                    beginnerPromptModal.style.display = 'none';
+                }
+                if (e.target === intermediatePromptModal) {
+                    intermediatePromptModal.style.display = 'none';
+                }
+                if (e.target === advancedPromptModal) {
+                    advancedPromptModal.style.display = 'none';
+                }
+            });
 
             // Switch tabs
             document.querySelectorAll('#recordingTabs a').forEach(tab => {
@@ -392,10 +539,8 @@
                         submitButton.disabled = !recording && !audioURL;
                         selectedFile.textContent = '';
                         selectedAudioFile = null;
-                    } else if (this.id === 'practiceTab') {
-                        submitButton.disabled = !selectedAudioFile;
-                        if (recording) stopRecording();
                     } else {
+                        // Upload tab
                         submitButton.disabled = !selectedAudioFile;
                         if (recording) stopRecording();
                     }
@@ -436,37 +581,6 @@
                 submitButton.disabled = false;
             }
 
-            // Practice recording buttons
-            const practiceRecordButtons = document.querySelectorAll('.practice-record-btn');
-            
-            practiceRecordButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    if (recording) {
-                        stopRecording();
-                    } else {
-                        // Clear any previous recording
-                        selectedAudioFile = null;
-                        audioURL = null;
-                        
-                        // Set active button
-                        activePracticeButton = this;
-                        const level = this.getAttribute('data-level');
-                        
-                        // Start recording
-                        startPracticeRecording();
-                    }
-                });
-            });
-            
-            function startPracticeRecording() {
-                if (activePracticeButton) {
-                    activePracticeButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop';
-                    activePracticeButton.classList.add('recording');
-                }
-                
-                startRecording();
-            }
-
             // Recording
             recordButton.addEventListener('click', () => {
                 if (!recording) {
@@ -492,29 +606,21 @@
                         }
                         audioURL = URL.createObjectURL(audioBlob);
                         
-                        // Show audio in the appropriate preview based on active tab
-                        if (activePracticeButton) {
-                            practiceRecordedAudio.src = audioURL;
-                            practiceAudioPreview.style.display = 'block';
-                        } else {
-                            recordedAudio.src = audioURL;
-                            audioPreview.style.display = 'block';
-                        }
+                        // Show audio in the preview
+                        recordedAudio.src = audioURL;
+                        audioPreview.style.display = 'block';
                         
                         submitButton.disabled = false;
                     });
                     mediaRecorder.start();
                     recording = true;
                     
-                    // Update record button if not in practice mode
-                    if (!activePracticeButton) {
-                        recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
-                        recordButton.classList.add('recording');
-                    }
+                    // Reset record button
+                    recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
+                    recordButton.classList.add('recording');
                     
                     recordingStatus.textContent = 'Recording...';
                     audioPreview.style.display = 'none';
-                    practiceAudioPreview.style.display = 'none';
                     recordingTime = 0;
                     recordingTimer.style.display = 'block';
                     timerInterval = setInterval(updateTimer, 1000);
@@ -537,15 +643,9 @@
                     mediaRecorder.stream.getTracks().forEach(track => track.stop());
                     recording = false;
                     
-                    // Reset record button if not in practice mode
-                    if (!activePracticeButton) {
-                        recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
-                        recordButton.classList.remove('recording');
-                    } else {
-                        // Reset practice button
-                        activePracticeButton.innerHTML = '<i class="bi bi-mic"></i> Record';
-                        activePracticeButton.classList.remove('recording');
-                    }
+                    // Reset record button
+                    recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
+                    recordButton.classList.remove('recording');
                     
                     recordingStatus.textContent = 'Recording stopped.';
                     clearInterval(timerInterval);
@@ -571,12 +671,6 @@
 
                 const formData = new FormData();
                 formData.append('file', selectedAudioFile);
-                
-                // Add reference info if practicing with a specific phrase
-                if (activePracticeButton) {
-                    const level = activePracticeButton.getAttribute('data-level');
-                    formData.append('practice_level', level);
-                }
 
                 fetch('/process-audio', {
                     method: 'POST',
@@ -639,12 +733,10 @@
             newRecordingButton.addEventListener('click', () => {
                 resultContainer.style.display = 'none';
                 audioPreview.style.display = 'none';
-                practiceAudioPreview.style.display = 'none';
                 recordingStatus.textContent = '';
                 selectedFile.textContent = '';
                 submitButton.disabled = true;
                 selectedAudioFile = null;
-                activePracticeButton = null;
                 if (audioURL) {
                     URL.revokeObjectURL(audioURL);
                     audioURL = null;
