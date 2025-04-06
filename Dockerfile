@@ -22,4 +22,4 @@ RUN mkdir -p uploads
 EXPOSE 8080
 
 # Run the web service on container startup
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 180 app:app
