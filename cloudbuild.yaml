@@ -28,7 +28,7 @@ images:
   - 'gcr.io/$PROJECT_ID/upgraded-spoon:$COMMIT_SHA'
 
 substitutions:
-  _BUCKET_NAME: 'upgraded-spoon-files' # Default bucket name
+  _BUCKET_NAME: 'upgraded-spoon-bucket' # Updated bucket name
 
 options:
   logging: CLOUD_LOGGING_ONLY
