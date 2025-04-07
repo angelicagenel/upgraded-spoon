@@ -1,6 +1,3 @@
-I reviewed the `app.py` file from the provided URL. Here is the complete content of the file:
-
-```python
 import os
 import json
 import tempfile
@@ -65,6 +62,7 @@ def load_dictionary():
                     content = blob.download_as_string().decode('utf-8')
                     words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
                     return set(words)
+            
             # Fallback to a small built-in dictionary
             logger.warning("Could not load dictionary file. Using minimal built-in dictionary.")
             return set([
@@ -91,6 +89,7 @@ def load_references():
                 if blob.exists():
                     content = blob.download_as_string().decode('utf-8')
                     return json.loads(content)
+            
             # Default references if file not found
             return {
                 "beginner": "Hola, ¿cómo estás? Espero que estés teniendo un buen día.",
@@ -492,3 +491,108 @@ def health():
     return jsonify({
         "status": "ok",
         "bucket": bucket_status,
+        "bucket_name": BUCKET_NAME,
+        "dictionary_size": len(SPANISH_DICT)
+    })
+
+@app.route('/process-audio', methods=['POST'])
+def process_audio():
+    """Process uploaded or recorded audio and provide assessment"""
+    try:
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            logger.error("No file in request")
+            return jsonify({"error": "No audio file in the request"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            logger.error("Empty filename in request")
+            return jsonify({"error": "No selected file"}), 400
+        
+        if not allowed_file(file.filename):
+            logger.error(f"Invalid file type: {file.filename}")
+            return jsonify({"error": "Invalid file type. Please upload .wav, .mp3, .m4a, .opus, .webm, or .ogg"}), 400
+        
+        # Check if this is a practice mode assessment
+        practice_level = request.form.get('practice_level', None)
+        
+        # Process in memory
+        audio_content = file.read()
+        logger.info(f"Received audio file of size: {len(audio_content)} bytes")
+        
+        # Transcribe audio
+        spoken_text = transcribe_audio(audio_content)
+        
+        if not spoken_text:
+            logger.warning("No transcription returned")
+            return jsonify({
+                "score": 70,
+                "level": "Novice Mid",
+                "transcribed_text": "No transcription available. Please try speaking clearly in Spanish.",
+                "error": "Could not transcribe audio. Please try again.",
+                "strengths": [],
+                "areas_for_improvement": ["Speak clearly in Spanish", "Check your microphone"]
+            })
+        
+        # Calculate assessment based on mode
+        if practice_level and practice_level in REFERENCES:
+            # Practice mode with reference phrase
+            assessment = assess_practice_phrase(spoken_text, practice_level)
+            corrected_text = REFERENCES[practice_level]  # Use reference as corrected text
+            logger.info(f"Practice mode assessment: level={practice_level}, score={assessment['score']}")
+        else:
+            # Free speech mode
+            assessment = assess_free_speech(spoken_text)
+            corrected_text = generate_corrected_text(spoken_text)
+            logger.info(f"Free speech assessment: level={assessment['level']}, score={assessment['score']}")
+        
+        # Generate TTS feedback
+        tts_url = generate_tts_feedback(corrected_text, assessment['level'])
+        
+        # Prepare response
+        response = {
+            "score": assessment['score'],
+            "level": assessment['level'],
+            "transcribed_text": spoken_text,
+            "corrected_text": corrected_text,
+            "feedback": assessment['feedback'],
+            "strengths": assessment['strengths'],
+            "areas_for_improvement": assessment['areas_for_improvement'],
+            "tts_audio_url": tts_url
+        }
+        
+        # Add practice-specific fields if applicable
+        if practice_level and 'reference_text' in assessment:
+            response["reference_text"] = assessment['reference_text']
+            response["similarity"] = assessment['similarity']
+        
+        return jsonify(response)
+            
+    except Exception as e:
+        logger.error(f"Error processing audio: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-tts-audio/<filename>')
+def get_tts_audio(filename):
+    """Serve TTS audio files from local storage"""
+    file_path = app.config.get(f'TTS_FILE_{filename}')
+    if not file_path:
+        return "Audio file not found", 404
+    
+    return send_file(file_path, mimetype='audio/mpeg')
+
+@app.route('/references')
+def get_references():
+    """Serves the reference phrases for practice"""
+    try:
+        return jsonify(REFERENCES)
+    except Exception as e:
+        logger.error(f"Error loading references: {e}")
+        return jsonify({
+            "error": "Could not load references",
+            "beginner": "Hola, ¿cómo estás?"
+        }), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
