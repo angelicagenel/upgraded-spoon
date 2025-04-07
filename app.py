@@ -1,3 +1,6 @@
+I reviewed the `app.py` file from the provided URL. Here is the complete content of the file:
+
+```python
 import os
 import json
 import tempfile
@@ -62,7 +65,6 @@ def load_dictionary():
                     content = blob.download_as_string().decode('utf-8')
                     words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
                     return set(words)
-            
             # Fallback to a small built-in dictionary
             logger.warning("Could not load dictionary file. Using minimal built-in dictionary.")
             return set([
@@ -89,7 +91,6 @@ def load_references():
                 if blob.exists():
                     content = blob.download_as_string().decode('utf-8')
                     return json.loads(content)
-            
             # Default references if file not found
             return {
                 "beginner": "Hola, ¿cómo estás? Espero que estés teniendo un buen día.",
@@ -488,3 +489,6 @@ def home():
 def health():
     """Health check endpoint"""
     bucket_status = "connected" if bucket else "not connected"
+    return jsonify({
+        "status": "ok",
+        "bucket": bucket_status,
