@@ -1,3 +1,12 @@
+It looks like you want to ensure that your `app.py` file is correctly configured to use the `upgraded-spoon-bucket` in Google Cloud Storage. Let's clarify and streamline the process:
+
+1. **Set the Bucket Name**: Make sure the bucket name in your script is set to `upgraded-spoon-bucket`.
+
+2. **Ensure Single Bucket Usage**: Ensure that your code uses only this bucket throughout the application.
+
+Here's a cleaned-up version of your `app.py` file, making sure it uses the `upgraded-spoon-bucket`:
+
+```python
 import os
 import json
 import tempfile
@@ -16,20 +25,26 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Configure Cloud Storage
-BUCKET_NAME = os.environ.get('BUCKET_NAME', 'spanish-pronunciation-tool-files')
+BUCKET_NAME = 'upgraded-spoon-bucket'
 storage_client = storage.Client()
 
-# Try to get the bucket, create it if it doesn't exist
-try:
-    bucket = storage_client.get_bucket(BUCKET_NAME)
-    logger.info(f"Connected to bucket: {BUCKET_NAME}")
-except Exception as e:
+def get_or_create_bucket(bucket_name):
     try:
-        bucket = storage_client.create_bucket(BUCKET_NAME)
-        logger.info(f"Bucket {BUCKET_NAME} created.")
+        bucket = storage_client.get_bucket(bucket_name)
+        logger.info(f"Connected to bucket: {bucket_name}")
+    except google.api_core.exceptions.NotFound:
+        try:
+            bucket = storage_client.create_bucket(bucket_name)
+            logger.info(f"Bucket {bucket_name} created.")
+        except Exception as e:
+            logger.error(f"Error creating bucket {bucket_name}: {e}")
+            bucket = None
     except Exception as e:
-        logger.error(f"Error with bucket: {e}")
+        logger.error(f"Error accessing bucket {bucket_name}: {e}")
         bucket = None
+    return bucket
+
+bucket = get_or_create_bucket(BUCKET_NAME)
 
 # Create uploads folder for local testing
 UPLOAD_FOLDER = 'uploads'
@@ -62,7 +77,6 @@ def load_dictionary():
                     content = blob.download_as_string().decode('utf-8')
                     words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
                     return set(words)
-            
             # Fallback to a small built-in dictionary
             logger.warning("Could not load dictionary file. Using minimal built-in dictionary.")
             return set([
@@ -89,7 +103,6 @@ def load_references():
                 if blob.exists():
                     content = blob.download_as_string().decode('utf-8')
                     return json.loads(content)
-            
             # Default references if file not found
             return {
                 "beginner": "Hola, ¿cómo estás? Espero que estés teniendo un buen día.",
@@ -472,8 +485,6 @@ def generate_tts_feedback(text, level):
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
             temp_file.write(response.audio_content)
             temp_file.close()
-            app.config[f'TTS_FILE_{filename}'] = temp_file.name
-            return url_for('get_tts_audio', filename=filename, _external=True)
             
     except Exception as e:
         logger.error(f"Error generating TTS: {e}")
