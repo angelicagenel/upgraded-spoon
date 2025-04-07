@@ -1,12 +1,3 @@
-It looks like you want to ensure that your `app.py` file is correctly configured to use the `upgraded-spoon-bucket` in Google Cloud Storage. Let's clarify and streamline the process:
-
-1. **Set the Bucket Name**: Make sure the bucket name in your script is set to `upgraded-spoon-bucket`.
-
-2. **Ensure Single Bucket Usage**: Ensure that your code uses only this bucket throughout the application.
-
-Here's a cleaned-up version of your `app.py` file, making sure it uses the `upgraded-spoon-bucket`:
-
-```python
 import os
 import json
 import tempfile
@@ -64,18 +55,19 @@ def allowed_file(filename):
 def load_dictionary():
     """Load Spanish dictionary from either cloud storage or local file"""
     try:
-        # First try to load from local file
+        # First try to load from the local merged dictionary file
         try:
-            with open("es_50k.txt", "r", encoding="utf-8") as f:
-                words = [line.strip().split()[0].lower() for line in f if line.strip()]
+            with open("dictionaries/final_spanish.txt", "r", encoding="utf-8") as f:
+                # Assuming one word per line
+                words = [line.strip().lower() for line in f if line.strip()]
                 return set(words)
         except FileNotFoundError:
             # If local file not found, try to load from Cloud Storage
             if bucket:
-                blob = bucket.blob('es_50k.txt')
+                blob = bucket.blob('final_spanish.txt')
                 if blob.exists():
                     content = blob.download_as_string().decode('utf-8')
-                    words = [line.strip().split()[0].lower() for line in content.splitlines() if line.strip()]
+                    words = [line.strip().lower() for line in content.splitlines() if line.strip()]
                     return set(words)
             # Fallback to a small built-in dictionary
             logger.warning("Could not load dictionary file. Using minimal built-in dictionary.")
@@ -274,7 +266,7 @@ def actfl_assessment(transcribed_text):
     recognized_word_percentage = sum(1 for s in word_scores if s >= 80) / len(words)
     
     # 2. Text type: Based on number of words (complexity of response)
-    text_complexity = min(100, 60 + len(words) * 4) # Bonus for longer phrases
+    text_complexity = min(100, 60 + len(words) * 4)  # Bonus for longer phrases
     
     # 3. Content: Based on variety of vocabulary (unique words ratio)
     unique_words_ratio = len(set(words)) / len(words)
