@@ -4,7 +4,6 @@ import tempfile
 import logging
 from flask import Flask, request, render_template, jsonify, send_file, url_for
 from google.cloud import speech
-from google.cloud import storage
 from google.cloud import texttospeech
 from fuzzywuzzy import fuzz
 import uuid
@@ -14,28 +13,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
-# Configure Cloud Storage
-BUCKET_NAME = 'upgraded-spoon-bucket'
-storage_client = storage.Client()
-
-def get_or_create_bucket(bucket_name):
-    try:
-        bucket = storage_client.get_bucket(bucket_name)
-        logger.info(f"Connected to bucket: {bucket_name}")
-    except google.api_core.exceptions.NotFound:
-        try:
-            bucket = storage_client.create_bucket(bucket_name)
-            logger.info(f"Bucket {bucket_name} created.")
-        except Exception as e:
-            logger.error(f"Error creating bucket {bucket_name}: {e}")
-            bucket = None
-    except Exception as e:
-        logger.error(f"Error accessing bucket {bucket_name}: {e}")
-        bucket = None
-    return bucket
-
-bucket = get_or_create_bucket(BUCKET_NAME)
 
 # Create uploads folder for local testing
 UPLOAD_FOLDER = 'uploads'
@@ -386,87 +363,44 @@ def generate_improvements(mispronounced, accuracy):
     
     return areas
 
-def generate_corrected_text(transcribed_text):
-    """Generate grammatically corrected version of the transcribed text"""
-    # This is a simplified version that just returns the transcribed text
-    # In a full implementation, you would use a grammar correction model or service
-    # For now, we're just implementing some basic corrections
-    
-    # Simple corrections for common errors
-    corrections = {
-        "tu eres": "tú eres",
-        "el es": "él es",
-        "ella esta": "ella está",
-        "tu tienes": "tú tienes",
-        "yo quero": "yo quiero",
-        "buenes dias": "buenos días",
-        "como esta": "cómo está",
-        "como estas": "cómo estás",
-        "gracias por tu ayudar": "gracias por tu ayuda",
-        "no problemo": "no hay problema",
-        "yo no se": "yo no sé"
-    }
-    
-    corrected = transcribed_text
-    for error, correction in corrections.items():
-        corrected = corrected.replace(error, correction)
-    
-    return corrected
-
 def generate_tts_feedback(text, level):
     """Generate Text-to-Speech audio feedback in Spanish"""
     try:
         # Initialize Text-to-Speech client
         client = texttospeech.TextToSpeechClient()
-        
+
         # Select voice based on proficiency level (slower for beginners)
         speaking_rate = 0.8 if level.startswith("Novice") else 1.0
-        
+
         # Build the voice request
         synthesis_input = texttospeech.SynthesisInput(text=text)
-        
+
         # Use a female Spanish voice
         voice = texttospeech.VoiceSelectionParams(
             language_code="es-ES",
             ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
         )
-        
+
         # Select the type of audio file
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
             speaking_rate=speaking_rate
         )
-        
+
         # Perform the text-to-speech request
         response = client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
-        
-        # Generate a unique filename
-        filename = f"tts_{uuid.uuid4()}.mp3"
-        
-        # If we have a bucket, upload to Cloud Storage
-        if bucket:
-            blob = bucket.blob(f"tts/{filename}")
-            blob.upload_from_bytes(response.audio_content, content_type='audio/mpeg')
-            
-            # Create a signed URL that will be valid for 1 hour
-            url = blob.generate_signed_url(
-                version="v4",
-                expiration=3600,  # 1 hour
-                method="GET"
-            )
-            return url
-        else:
-            # Save to a temporary file and return its path
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            temp_file.write(response.audio_content)
-            temp_file.close()
-            
+
+        # Save to a temporary file and return its path
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        temp_file.write(response.audio_content)
+        temp_file.close()
+        return temp_file.name
+
     except Exception as e:
         logger.error(f"Error generating TTS: {e}")
         return None
-
 # Flask routes
 @app.route('/')
 def home():
