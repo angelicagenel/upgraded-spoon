@@ -366,37 +366,35 @@ def generate_improvements(mispronounced, accuracy):
 def generate_tts_feedback(text, level):
     """Generate Text-to-Speech audio feedback in Spanish"""
     try:
-        # Initialize Text-to-Speech client
         client = texttospeech.TextToSpeechClient()
-
-        # Select voice based on proficiency level (slower for beginners)
         speaking_rate = 0.8 if level.startswith("Novice") else 1.0
 
-        # Build the voice request
         synthesis_input = texttospeech.SynthesisInput(text=text)
-
-        # Use a female Spanish voice
         voice = texttospeech.VoiceSelectionParams(
             language_code="es-ES",
             ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
         )
-
-        # Select the type of audio file
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
             speaking_rate=speaking_rate
         )
-
-        # Perform the text-to-speech request
         response = client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
 
-        # Save to a temporary file and return its path
+        # Save to temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
         temp_file.write(response.audio_content)
         temp_file.close()
-        return temp_file.name
+
+        # Read content to return directly
+        with open(temp_file.name, 'rb') as f:
+            audio_data = f.read()
+
+        # Delete temp file
+        os.remove(temp_file.name)
+
+        return audio_data  # Return raw MP3 bytes
 
     except Exception as e:
         logger.error(f"Error generating TTS: {e}")
