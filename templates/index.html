@@ -699,11 +699,16 @@
                     // Set feedback text
                     feedbackText.textContent = data.feedback;
                     
-                    // TTS feedback audio
-                    if (data.tts_audio_url) {
-                        ttsAudio.src = data.tts_audio_url;
-                    }
-                    
+                   // TTS feedback audio
+if (data.tts_audio) {
+    const audioSrc = "data:audio/mp3;base64," + data.tts_audio;
+    ttsAudio.querySelector('source').src = audioSrc;
+    ttsAudio.load();
+    ttsAudio.play().catch(err => {
+        console.warn("Autoplay failed:", err);
+    });
+}
+                  
                     // Strengths
                     strengthsList.innerHTML = '';
                     data.strengths.forEach(strength => {
