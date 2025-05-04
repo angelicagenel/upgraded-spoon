@@ -81,34 +81,19 @@ def load_dictionary():
     except Exception as e:
         logger.error(f"Error loading dictionary: {e}")
         return set()
-
 # Load reference phrases for assessment and practice
 def load_references():
-    """Load reference phrases from file or provide defaults"""
+    """Load reference phrases from local JSON file"""
     try:
-        try:
-            with open("references.json", "r", encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            if bucket:
-                blob = bucket.blob('references.json')
-                if blob.exists():
-                    content = blob.download_as_string().decode('utf-8')
-                    return json.loads(content)
-            # Default references if file not found
-            return {
-                "beginner": "Hola, ¿cómo estás? Espero que estés teniendo un buen día.",
-                "intermediate": "Los bomberos llegaron rápidamente al lugar del incendio.",
-                "advanced": "En caso de emergencia, mantenga la calma y siga las instrucciones de seguridad."
-            }
+        with open("data/references.json", "r", encoding="utf-8") as f:
+            return json.load(f)
     except Exception as e:
-        logger.error(f"Error loading references: {e}")
+        logger.error(f"Error loading local references: {e}")
         return {
             "beginner": "Hola, ¿cómo estás?",
             "intermediate": "Me gusta viajar y conocer nuevas culturas.",
             "advanced": "La educación es fundamental para el desarrollo de la sociedad."
         }
-
 # Initialize Spanish dictionary and references
 SPANISH_DICT = load_dictionary()
 REFERENCES = load_references()
