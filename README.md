@@ -1,4 +1,4 @@
-# Spanish Pronunciation Tool
+# Spanish Pronunciation Tool 🎧
 
 An AI-powered web application that provides feedback on Spanish pronunciation using Google Cloud services.
 
