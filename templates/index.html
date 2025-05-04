@@ -1,751 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spanish Pronunciation Assessment Tool</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --color-primary: #ef7c8e;
-            --color-primary-light: #ffe8e3;
-            --color-secondary: #e89a8a;
-            --color-accent: #db6565;
-            --color-teal-dark: #6b8d94;
-            --color-teal: #7ba1a5;
-            --color-bg-light: #f8ebec;
-            --color-text-dark: #333333;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--color-bg-light);
-            margin: 0;
-            padding: 20px 0 40px;
-        }
-        
-        .container {
-            max-width: 800px;
-            background-color: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .header {
-            background-color: var(--color-primary);
-            color: white;
-            text-align: center;
-            margin: -30px -30px 30px;
-            padding: 20px 30px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-        
-        .header h1 {
-            margin-top: 10px;
-            margin-bottom: 5px;
-        }
-        
-        .card-header {
-            background-color: var(--color-primary-light);
-            border-radius: 5px;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background-color: var(--color-secondary) !important;
-            color: white !important;
-        }
-        
-        .btn-record {
-            background-color: var(--color-accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .btn-record.recording {
-            animation: pulse 1.5s infinite;
-        }
-        
-        .btn-record:hover {
-            background-color: var(--color-secondary);
-        }
-        
-        .btn-submit {
-            background-color: var(--color-teal-dark);
-            color: white;
-            border: none;
-        }
-        
-        .btn-submit:hover {
-            background-color: var(--color-teal);
-        }
-        
-        .result-container {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 5px;
-            background-color: var(--color-bg-light);
-            display: none;
-        }
-        
-        .score-display {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .level-display {
-            font-size: 20px;
-            color: var(--color-teal-dark);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .score-meter {
-            height: 30px;
-            background-color: #e9ecef;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        
-        .score-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #db6565 0%, #ef7c8e 50%, #7ba1a5 100%);
-            border-radius: 15px;
-            transition: width 1s;
-            text-align: center;
-            color: white;
-            font-weight: bold;
-            line-height: 30px;
-        }
-        
-        .upload-container {
-            border: 2px dashed #ccc;
-            border-radius: 5px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-        
-        .upload-container:hover {
-            border-color: var(--color-teal);
-        }
-        
-        #fileInput {
-            display: none;
-        }
-        
-        /* Style for the recording tip banner */
-        .recording-tip {
-            background-color: var(--color-primary-light);
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            color: var(--color-accent);
-            font-weight: 500;
-        }
-        
-        /* Style for the prompt section */
-        .prompt-section {
-            background-color: var(--color-primary-light);
-            border-radius: 5px;
-            padding: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .prompt-title {
-            color: var(--color-accent);
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .prompt-links {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-        
-        .prompt-link {
-            padding: 5px 15px;
-            background-color: var(--color-secondary);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        .prompt-link:hover {
-            background-color: var(--color-accent);
-            text-decoration: none;
-            color: white;
-        }
-        
-        /* Modal for prompts */
-        .prompt-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-        
-        .prompt-modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 600px;
-        }
-        
-        .close-modal {
-            float: right;
-            cursor: pointer;
-            font-size: 24px;
-        }
-        
-        .example-text {
-            background-color: var(--color-primary-light);
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            color: var(--color-teal-dark);
-            font-size: 0.9rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spanish Pronunciation Assessment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8ebec;
+      padding: 40px 0;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      max-width: 750px;
+      margin: auto;
+      padding: 30px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    .btn-record {
+      background-color: #db6565;
+      color: white;
+    }
+    .btn-record.recording {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .prompt-buttons button {
+      margin: 5px;
+    }
+    .modal-content {
+      padding: 20px;
+    }
+    .example-text {
+      background: #fff7f5;
+      padding: 15px;
+      border-left: 4px solid #db6565;
+      margin-top: 15px;
+      border-radius: 5px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- HEADER -->
-        <div class="header">
-            <h1>Spanish Pronunciation Assessment</h1>
-            <p class="lead mb-0">Record or upload Spanish audio to get detailed pronunciation feedback</p>
-        </div>
+  <div class="container">
+    <h1 class="text-center text-danger mb-3">Spanish Pronunciation Assessment</h1>
+    <p class="text-center">🎙️ Click "Start Recording", then speak in Spanish based on one of the prompts below.</p>
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" id="recordingTabs">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="recordTab" data-bs-toggle="tab" href="#record">Record Speech</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="uploadTab" data-bs-toggle="tab" href="#upload">Upload File</a>
-                    </li>
-                </ul>
-            </div>
-           <div class="prompt-section mb-3">
-    <p class="prompt-title">Need inspiration? Click a level below:</p>
-   <div class="prompt-links mb-2">
-    <button class="btn btn-sm btn-record" onclick="showPrompt('beginner')">Beginner</button>
-    <button class="btn btn-sm btn-record" onclick="showPrompt('intermediate')">Intermediate</button>
-    <button class="btn btn-sm btn-record" onclick="showPrompt('advanced')">Advanced</button>
-</div>
-
-<div id="promptDisplay" class="example-text" style="display: none;"></div>
-</div>
-
-                
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="record">
-                        <p>Speak freely in Spanish to get a pronunciation assessment.</p>
-                        
-                        <!-- Recording Tip Banner - Added as per REQUEST #1 -->
-                        <div class="recording-tip">
-                            <i class="bi bi-info-circle"></i> For more accurate results, record no less than 10 seconds and up to 2 minutes.
-                        </div>
-                        
-                        <div class="text-center">
-                            <button id="recordButton" class="btn btn-record">
-                                <i class="bi bi-mic"></i> Start Recording
-                            </button>
-                            <p id="recordingStatus" class="mt-2"></p>
-                            <div id="recordingTimer" class="mt-2" style="display: none;">00:00</div>
-                        </div>
-                        <div id="audioPreview" class="mt-3" style="display: none;">
-                            <h6>Preview:</h6>
-                            <audio id="recordedAudio" controls class="w-100"></audio>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-pane fade" id="upload">
-                        <div class="upload-container" id="uploadArea">
-                            <i class="bi bi-cloud-upload"></i>
-                            <p>Drag an audio file here or click to select it</p>
-                            <p class="text-muted">(.wav, .mp3, .m4a, .opus, .webm, .ogg)</p>
-                            <input type="file" id="fileInput" accept=".wav,.mp3,.m4a,.opus,.webm,.ogg">
-                        </div>
-                        <div id="selectedFile" class="mt-2"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-grid gap-2">
-            <button id="submitButton" class="btn btn-submit" disabled>Analyze Pronunciation</button>
-        </div>
-
-        <div id="loadingIndicator" class="text-center my-4" style="display: none;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p>Analyzing your pronunciation... Please wait.</p>
-        </div>
-
-        <div id="resultContainer" class="result-container">
-            <h3 class="text-center mb-4">Assessment Results</h3>
-            <div id="scoreContainer">
-                <div class="score-display">Score: <span id="scoreValue">0</span>%</div>
-                <div class="level-display">ACTFL Level: <span id="levelValue">Novice</span></div>
-                <div class="score-meter">
-                    <div class="score-fill" id="scoreFill" style="width: 0%;">0%</div>
-                </div>
-            </div>
-            
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">What We Heard</h5>
-                </div>
-                <div class="card-body">
-                    <p id="transcribedText" class="mb-0"></p>
-                </div>
-            </div>
-            
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Corrected Feedback</h5>
-                </div>
-                <div class="card-body">
-                    <p id="correctedText" class="mb-0"></p>
-                    <div class="mt-3">
-                        <h6>Listen to the correct pronunciation:</h6>
-                        <audio id="ttsAudio" controls class="w-100">
-                            <source src="" type="audio/mp3">
-                            Your browser does not support audio playback.
-                        </audio>
-                        <div class="text-center mt-2">
-    <button id="repeatTTSButton" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-volume-up"></i> Repeat Pronunciation
-    </button>
-</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Feedback</h5>
-                </div>
-                <div class="card-body">
-                    <p id="feedbackText" class="mb-2"></p>
-                    
-                    <h6 class="mt-4">Strengths:</h6>
-                    <ul id="strengthsList"></ul>
-                    
-                    <h6 class="mt-3">Areas for Improvement:</h6>
-                    <ul id="improvementsList"></ul>
-                </div>
-            </div>
-            
-            <div class="d-grid gap-2">
-                <button id="newRecordingButton" class="btn btn-primary">Start New Assessment</button>
-            </div>
-        </div>
+    <!-- PROMPT BUTTONS -->
+    <div class="text-center prompt-buttons mb-4">
+      <button class="btn btn-outline-primary" onclick="showPrompt('beginner')">Beginner</button>
+      <button class="btn btn-outline-warning" onclick="showPrompt('intermediate')">Intermediate</button>
+      <button class="btn btn-outline-danger" onclick="showPrompt('advanced')">Advanced</button>
     </div>
 
-<!-- Prompt Modals -->
-<div id="beginnerPromptModal" class="prompt-modal">
-  <div class="prompt-modal-content">
-    <span class="close-modal">&times;</span>
-    <h4>Beginner Prompt</h4>
-    <p><strong>Topic: Introduce Yourself</strong></p>
-    <p>Talk about yourself in Spanish. Try to include:</p>
-    <ul>
-      <li>Your name and where you're from</li>
-      <li>Your age and occupation</li>
-      <li>What languages you speak</li>
-      <li>Your hobbies or interests</li>
-    </ul>
-    <h5>Example:</h5>
-    <p class="example-text">
-      Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. 
-      Hablo inglés y estoy aprendiendo español. Me gusta leer, cocinar, y pasar tiempo con mis amigos.
-    </p>
-  </div>
-</div>
+    <div id="promptContent" style="display:none;">
+      <h4 id="promptTitle"></h4>
+      <p id="promptIdeas"></p>
+      <p class="example-text" id="promptExample"></p>
+    </div>
 
-<div id="intermediatePromptModal" class="prompt-modal">
-  <div class="prompt-modal-content">
-    <span class="close-modal">&times;</span>
-    <h4>Intermediate Prompt</h4>
-    <p><strong>Topic: Describe Your Day</strong></p>
-    <p>Talk about your typical day or what you did yesterday. Try to include:</p>
-    <ul>
-      <li>Your morning routine</li>
-      <li>Activities you did</li>
-      <li>People you met</li>
-      <li>How you felt</li>
-    </ul>
-    <h5>Example:</h5>
-    <p class="example-text">
-      Ayer me desperté a las siete de la mañana. Primero, tomé un café y desayuné con mi familia.
-      Después, fui a trabajar en autobús. Tuve una reunión importante con mis colegas sobre un nuevo proyecto.
-      Por la tarde, almorcé con mi amigo Juan en un restaurante cerca de la oficina. La comida estaba deliciosa.
-      Regresé a casa a las seis y cené con mi familia. Estaba cansado pero contento.
-    </p>
-  </div>
-</div>
+    <!-- RECORDING BUTTON -->
+    <div class="text-center my-4">
+      <button id="recordButton" class="btn btn-record">
+        <i class="bi bi-mic"></i> Start Recording
+      </button>
+      <p id="recordingStatus" class="mt-2 text-muted"></p>
+      <div id="recordingTimer" class="mt-2"></div>
+    </div>
 
-<div id="advancedPromptModal" class="prompt-modal">
-  <div class="prompt-modal-content">
-    <span class="close-modal">&times;</span>
-    <h4>Advanced Prompt</h4>
-    <p><strong>Topic: Opinion on Technology and Education</strong></p>
-    <p>Share your thoughts on how technology affects education. Consider:</p>
-    <ul>
-      <li>Benefits and challenges of technology in learning</li>
-      <li>Your personal experiences with online education</li>
-      <li>How you think education will change in the future</li>
-      <li>Recommendations for better integration of technology in schools</li>
-    </ul>
-    <h5>Example:</h5>
-    <p class="example-text">
-      En mi opinión, la tecnología ha transformado completamente el panorama educativo en las últimas décadas.
-      Por un lado, ofrece herramientas increíbles que facilitan el acceso al conocimiento y permiten experiencias
-      de aprendizaje personalizadas. Los estudiantes pueden aprender a su propio ritmo y acceder a recursos que antes
-      eran imposibles de obtener.<br><br>
-      
-      Sin embargo, también presenta desafíos significativos. La dependencia excesiva de las pantallas puede afectar
-      la concentración y las habilidades sociales. Además, no todos los estudiantes tienen el mismo acceso a la tecnología,
-      lo que puede aumentar la desigualdad educativa.<br><br>
-      
-      Basado en mi experiencia personal con cursos en línea, creo que el futuro de la educación será un modelo híbrido
-      que combine lo mejor de la enseñanza tradicional con las ventajas de la tecnología. Las instituciones educativas
-      deberían invertir en capacitación docente para aprovechar al máximo estas herramientas.
-    </p>
+    <div id="audioPreview" class="mb-3" style="display:none;">
+      <h6>Preview:</h6>
+      <audio id="recordedAudio" controls class="w-100"></audio>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button id="submitButton" class="btn btn-success" disabled>Analyze Pronunciation</button>
+    </div>
+
+    <div id="loadingIndicator" class="text-center my-4" style="display: none;">
+      <div class="spinner-border text-danger" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p>Analyzing your pronunciation... Please wait.</p>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <div id="resultContainer" class="mt-4" style="display:none;">
+      <h3 class="text-center mb-3">Results</h3>
+      <p><strong>Score:</strong> <span id="scoreValue">0</span>%</p>
+      <p><strong>ACTFL Level:</strong> <span id="levelValue">Novice</span></p>
+      <p><strong>Transcription:</strong> <span id="transcribedText"></span></p>
+      <p><strong>Corrected Version:</strong> <span id="correctedText"></span></p>
+      <p><strong>Feedback:</strong> <span id="feedbackText"></span></p>
+    </div>
   </div>
-</div>
-    
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
+
+  <footer>© 2025 Spanish Learning Edge LLC</footer>
+
+  <script>
+    const prompts = {
+      beginner: {
+        title: "Beginner Prompt",
+        ideas: "Introduce yourself: your name, where you're from, your age, and your hobbies.",
+        example: "Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. Me gusta leer, cocinar, y pasar tiempo con mis amigos."
+      },
+      intermediate: {
+        title: "Intermediate Prompt",
+        ideas: "Describe your typical day or yesterday’s routine. Mention your morning, tasks, and feelings.",
+        example: "Ayer me desperté a las siete. Tomé un café, trabajé todo el día y cené con mi familia. Estaba cansado pero contento."
+      },
+      advanced: {
+        title: "Advanced Prompt",
+        ideas: "Talk about technology in education. Mention benefits, challenges, and your experiences.",
+        example: "La tecnología ha cambiado la educación. Ahora es más accesible, pero también puede distraer. Creo que el futuro será híbrido."
+      }
+    };
+
+    function showPrompt(level) {
+      const content = prompts[level];
+      document.getElementById('promptTitle').textContent = content.title;
+      document.getElementById('promptIdeas').textContent = content.ideas;
+      document.getElementById('promptExample').textContent = content.example;
+      document.getElementById('promptContent').style.display = 'block';
+    }
+
+    // Recording Logic
+    let mediaRecorder, audioChunks = [], audioBlob, audioURL;
     const recordButton = document.getElementById('recordButton');
     const submitButton = document.getElementById('submitButton');
     const recordingStatus = document.getElementById('recordingStatus');
     const recordingTimer = document.getElementById('recordingTimer');
-    const resultContainer = document.getElementById('resultContainer');
-    const scoreValue = document.getElementById('scoreValue');
-    const levelValue = document.getElementById('levelValue');
-    const scoreFill = document.getElementById('scoreFill');
-    const transcribedText = document.getElementById('transcribedText');
-    const correctedText = document.getElementById('correctedText');
-    const ttsAudio = document.getElementById('ttsAudio');
-    const feedbackText = document.getElementById('feedbackText');
-    const strengthsList = document.getElementById('strengthsList');
-    const improvementsList = document.getElementById('improvementsList');
-    const newRecordingButton = document.getElementById('newRecordingButton');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const fileInput = document.getElementById('fileInput');
-    const uploadArea = document.getElementById('uploadArea');
-    const selectedFile = document.getElementById('selectedFile');
-    const audioPreview = document.getElementById('audioPreview');
     const recordedAudio = document.getElementById('recordedAudio');
+    const audioPreview = document.getElementById('audioPreview');
 
-    // Prompt modal elements
-    const beginnerPromptModal = document.getElementById('beginnerPromptModal');
-    const intermediatePromptModal = document.getElementById('intermediatePromptModal');
-    const advancedPromptModal = document.getElementById('advancedPromptModal');
-    const promptLinks = document.querySelectorAll('.prompt-link');
-    const closeModalButtons = document.querySelectorAll('.close-modal');
+    let recording = false, seconds = 0, timer;
 
-    let mediaRecorder;
-    let audioChunks = [];
-    let recording = false;
-    let recordingTime = 0;
-    let timerInterval;
-    let selectedAudioFile = null;
-    let audioURL = null;
-
-    // Prompt modal functionality
-    promptLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const level = this.getAttribute('data-level');
-            if (level === 'beginner') {
-                beginnerPromptModal.style.display = 'block';
-            } else if (level === 'intermediate') {
-                intermediatePromptModal.style.display = 'block';
-            } else if (level === 'advanced') {
-                advancedPromptModal.style.display = 'block';
-            }
-        });
-    });
-
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            beginnerPromptModal.style.display = 'none';
-            intermediatePromptModal.style.display = 'none';
-            advancedPromptModal.style.display = 'none';
-        });
-    });
-
-    window.addEventListener('click', function(e) {
-        if (e.target === beginnerPromptModal) beginnerPromptModal.style.display = 'none';
-        if (e.target === intermediatePromptModal) intermediatePromptModal.style.display = 'none';
-        if (e.target === advancedPromptModal) advancedPromptModal.style.display = 'none';
-    });
-
-    // Switch tabs
-    document.querySelectorAll('#recordingTabs a').forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.querySelectorAll('#recordingTabs a').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
-            this.classList.add('active');
-            const target = document.querySelector(this.getAttribute('href'));
-            target.classList.add('show', 'active');
-            if (this.id === 'recordTab') {
-                submitButton.disabled = !recording && !audioURL;
-                selectedFile.textContent = '';
-                selectedAudioFile = null;
-            } else {
-                submitButton.disabled = !selectedAudioFile;
-                if (recording) stopRecording();
-            }
-        });
-    });
-
-    // Upload
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', e => {
-        e.preventDefault();
-        uploadArea.style.borderColor = 'var(--color-teal)';
-    });
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '#ccc';
-    });
-    uploadArea.addEventListener('drop', e => {
-        e.preventDefault();
-        uploadArea.style.borderColor = '#ccc';
-        if (e.dataTransfer.files.length) {
-            handleFileSelect(e.dataTransfer.files[0]);
-        }
-    });
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length) {
-            handleFileSelect(fileInput.files[0]);
-        }
-    });
-
-    function handleFileSelect(file) {
-        const validTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/opus', 'audio/webm', 'audio/ogg'];
-        const validExtensions = /\.(wav|mp3|m4a|opus|webm|ogg)$/i;
-        if (!validTypes.includes(file.type) && !file.name.match(validExtensions)) {
-            alert('Please select a valid audio file.');
-            return;
-        }
-        selectedAudioFile = file;
-        selectedFile.textContent = `Selected file: ${file.name}`;
-        submitButton.disabled = false;
-    }
-
-    // Recording
-    recordButton.addEventListener('click', () => {
-        if (!recording) {
-            startRecording();
-        } else {
-            stopRecording();
-        }
-    });
-
-    async function startRecording() {
+    recordButton.onclick = async () => {
+      if (!recording) {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
-            mediaRecorder.addEventListener('stop', () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                selectedAudioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
-                if (audioURL) URL.revokeObjectURL(audioURL);
-                audioURL = URL.createObjectURL(audioBlob);
-                recordedAudio.src = audioURL;
-                audioPreview.style.display = 'block';
-                submitButton.disabled = false;
-            });
-            mediaRecorder.start();
-            recording = true;
-            recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
-            recordButton.classList.add('recording');
-            recordingStatus.textContent = 'Recording...';
-            audioPreview.style.display = 'none';
-            recordingTime = 0;
-            recordingTimer.style.display = 'block';
-            timerInterval = setInterval(updateTimer, 1000);
-            setTimeout(() => {
-                if (recording) {
-                    stopRecording();
-                    recordingStatus.textContent = '3-minute limit reached.';
-                }
-            }, 3 * 60 * 1000);
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioURL = URL.createObjectURL(audioBlob);
+            recordedAudio.src = audioURL;
+            audioPreview.style.display = 'block';
+            submitButton.disabled = false;
+          };
+          mediaRecorder.start();
+          recording = true;
+          recordButton.textContent = 'Stop Recording';
+          recordButton.classList.add('recording');
+          recordingStatus.textContent = 'Recording...';
+          seconds = 0;
+          timer = setInterval(() => {
+            seconds++;
+            recordingTimer.textContent = `⏱️ ${Math.floor(seconds / 60)}:${('0' + (seconds % 60)).slice(-2)}`;
+          }, 1000);
         } catch (err) {
-            console.error('Microphone error:', err);
-            recordingStatus.textContent = 'Error accessing microphone. Check permissions.';
+          alert('Microphone access denied.');
         }
-    }
+      } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        recording = false;
+        recordButton.textContent = 'Start Recording';
+        recordButton.classList.remove('recording');
+        recordingStatus.textContent = 'Recording stopped.';
+        clearInterval(timer);
+      }
+    };
 
-    function stopRecording() {
-        if (mediaRecorder && recording) {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            recording = false;
-            recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
-            recordButton.classList.remove('recording');
-            recordingStatus.textContent = 'Recording stopped.';
-            clearInterval(timerInterval);
-            recordingTimer.style.display = 'none';
-        }
-    }
+    submitButton.onclick = () => {
+      const formData = new FormData();
+      formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
+      document.getElementById('loadingIndicator').style.display = 'block';
 
-    function updateTimer() {
-        recordingTime++;
-        const minutes = Math.floor(recordingTime / 60).toString().padStart(2, '0');
-        const seconds = (recordingTime % 60).toString().padStart(2, '0');
-        recordingTimer.textContent = `${minutes}:${seconds}`;
-    }
-
-    submitButton.addEventListener('click', () => {
-        if (!selectedAudioFile) {
-            alert('Please record or upload an audio file first.');
-            return;
-        }
-        loadingIndicator.style.display = 'block';
-        resultContainer.style.display = 'none';
-
-        const formData = new FormData();
-        formData.append('file', selectedAudioFile);
-
-        fetch('/process-audio', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            loadingIndicator.style.display = 'none';
-            if (data.error) {
-                alert('Error: ' + data.error);
-                return;
-            }
-            scoreValue.textContent = data.score;
-            levelValue.textContent = data.level;
-            scoreFill.style.width = data.score + '%';
-            scoreFill.textContent = data.score + '%';
-            transcribedText.textContent = data.transcribed_text;
-            correctedText.textContent = data.corrected_text || data.transcribed_text;
-            feedbackText.textContent = data.feedback;
-
-            if (data.tts_audio) {
-                const audioSrc = "data:audio/mp3;base64," + data.tts_audio;
-                ttsAudio.querySelector('source').src = audioSrc;
-                ttsAudio.load();
-                ttsAudio.play().catch(err => {
-                    console.warn("Autoplay failed:", err);
-                });
-            }
-
-            strengthsList.innerHTML = '';
-            data.strengths.forEach(strength => {
-                const li = document.createElement('li');
-                li.textContent = strength;
-                strengthsList.appendChild(li);
-            });
-
-            improvementsList.innerHTML = '';
-            data.areas_for_improvement.forEach(area => {
-                const li = document.createElement('li');
-                li.textContent = area;
-                improvementsList.appendChild(li);
-            });
-
-            resultContainer.style.display = 'block';
-            resultContainer.scrollIntoView({ behavior: 'smooth' });
-        })
-        .catch(error => {
-            loadingIndicator.style.display = 'none';
-            alert('Server error: ' + error);
-        });
-    });
-
-    newRecordingButton.addEventListener('click', () => {
-        resultContainer.style.display = 'none';
-        audioPreview.style.display = 'none';
-        recordingStatus.textContent = '';
-        selectedFile.textContent = '';
-        submitButton.disabled = true;
-        selectedAudioFile = null;
-        if (audioURL) {
-            URL.revokeObjectURL(audioURL);
-            audioURL = null;
-        }
-        document.getElementById('recordTab').click();
-    });
-
-    const repeatTTSButton = document.getElementById('repeatTTSButton');
-    if (repeatTTSButton) {
-        repeatTTSButton.addEventListener('click', () => {
-            ttsAudio.currentTime = 0;
-            ttsAudio.play().catch(err => {
-                console.warn("Playback failed:", err);
-            });
-        });
-    }
-});
-</script>
-<script>
-function showPrompt(level) {
-    const promptDisplay = document.getElementById('promptDisplay');
-    let text = '';
-
-    if (level === 'beginner') {
-        text = `<strong>Beginner Prompt:</strong><br>Introduce yourself. Talk about your name, where you're from, your age, and interests.<br><em>Example:</em> Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. Me gusta leer y cocinar.`;
-    } else if (level === 'intermediate') {
-        text = `<strong>Intermediate Prompt:</strong><br>Describe your typical day or yesterday's routine. Mention your morning and evening activities.`;
-    } else if (level === 'advanced') {
-        text = `<strong>Advanced Prompt:</strong><br>Share your opinion on technology and education. Discuss benefits, challenges, and future trends.`;
-    }
-
-    promptDisplay.innerHTML = text;
-    promptDisplay.style.display = 'block';
-}
-</script>
-    
-    <footer class="mt-4">
-        <p>© 2025 Spanish Learning Edge LLC</p>
-    </footer>
-
+      fetch('/process-audio', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+        document.getElementById('resultContainer').style.display = 'block';
+        document.getElementById('scoreValue').textContent = data.score;
+        document.getElementById('levelValue').textContent = data.level;
+        document.getElementById('transcribedText').textContent = data.transcribed_text;
+        document.getElementById('correctedText').textContent = data.corrected_text;
+        document.getElementById('feedbackText').textContent = data.feedback;
+      })
+      .catch(err => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+        alert('Error processing audio.');
+        console.error(err);
+      });
+    };
+  </script>
 </body>
 </html>
