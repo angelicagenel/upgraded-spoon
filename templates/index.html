@@ -448,321 +448,284 @@
             </p>
         </div>
     </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recordButton = document.getElementById('recordButton');
+    const submitButton = document.getElementById('submitButton');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const recordingTimer = document.getElementById('recordingTimer');
+    const resultContainer = document.getElementById('resultContainer');
+    const scoreValue = document.getElementById('scoreValue');
+    const levelValue = document.getElementById('levelValue');
+    const scoreFill = document.getElementById('scoreFill');
+    const transcribedText = document.getElementById('transcribedText');
+    const correctedText = document.getElementById('correctedText');
+    const ttsAudio = document.getElementById('ttsAudio');
+    const feedbackText = document.getElementById('feedbackText');
+    const strengthsList = document.getElementById('strengthsList');
+    const improvementsList = document.getElementById('improvementsList');
+    const newRecordingButton = document.getElementById('newRecordingButton');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const selectedFile = document.getElementById('selectedFile');
+    const audioPreview = document.getElementById('audioPreview');
+    const recordedAudio = document.getElementById('recordedAudio');
 
+    // Prompt modal elements
+    const beginnerPromptModal = document.getElementById('beginnerPromptModal');
+    const intermediatePromptModal = document.getElementById('intermediatePromptModal');
+    const advancedPromptModal = document.getElementById('advancedPromptModal');
+    const promptLinks = document.querySelectorAll('.prompt-link');
+    const closeModalButtons = document.querySelectorAll('.close-modal');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let recording = false;
+    let recordingTime = 0;
+    let timerInterval;
+    let selectedAudioFile = null;
+    let audioURL = null;
+
+    // Prompt modal functionality
+    promptLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const level = this.getAttribute('data-level');
+            if (level === 'beginner') {
+                beginnerPromptModal.style.display = 'block';
+            } else if (level === 'intermediate') {
+                intermediatePromptModal.style.display = 'block';
+            } else if (level === 'advanced') {
+                advancedPromptModal.style.display = 'block';
+            }
+        });
+    });
+
+    closeModalButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            beginnerPromptModal.style.display = 'none';
+            intermediatePromptModal.style.display = 'none';
+            advancedPromptModal.style.display = 'none';
+        });
+    });
+
+    window.addEventListener('click', function(e) {
+        if (e.target === beginnerPromptModal) beginnerPromptModal.style.display = 'none';
+        if (e.target === intermediatePromptModal) intermediatePromptModal.style.display = 'none';
+        if (e.target === advancedPromptModal) advancedPromptModal.style.display = 'none';
+    });
+
+    // Switch tabs
+    document.querySelectorAll('#recordingTabs a').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#recordingTabs a').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
+            this.classList.add('active');
+            const target = document.querySelector(this.getAttribute('href'));
+            target.classList.add('show', 'active');
+            if (this.id === 'recordTab') {
+                submitButton.disabled = !recording && !audioURL;
+                selectedFile.textContent = '';
+                selectedAudioFile = null;
+            } else {
+                submitButton.disabled = !selectedAudioFile;
+                if (recording) stopRecording();
+            }
+        });
+    });
+
+    // Upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', e => {
+        e.preventDefault();
+        uploadArea.style.borderColor = 'var(--color-teal)';
+    });
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+    });
+    uploadArea.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        if (e.dataTransfer.files.length) {
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            handleFileSelect(fileInput.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        const validTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/opus', 'audio/webm', 'audio/ogg'];
+        const validExtensions = /\.(wav|mp3|m4a|opus|webm|ogg)$/i;
+        if (!validTypes.includes(file.type) && !file.name.match(validExtensions)) {
+            alert('Please select a valid audio file.');
+            return;
+        }
+        selectedAudioFile = file;
+        selectedFile.textContent = `Selected file: ${file.name}`;
+        submitButton.disabled = false;
+    }
+
+    // Recording
+    recordButton.addEventListener('click', () => {
+        if (!recording) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    });
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
+            mediaRecorder.addEventListener('stop', () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                selectedAudioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
+                if (audioURL) URL.revokeObjectURL(audioURL);
+                audioURL = URL.createObjectURL(audioBlob);
+                recordedAudio.src = audioURL;
+                audioPreview.style.display = 'block';
+                submitButton.disabled = false;
+            });
+            mediaRecorder.start();
+            recording = true;
+            recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
+            recordButton.classList.add('recording');
+            recordingStatus.textContent = 'Recording...';
+            audioPreview.style.display = 'none';
+            recordingTime = 0;
+            recordingTimer.style.display = 'block';
+            timerInterval = setInterval(updateTimer, 1000);
+            setTimeout(() => {
+                if (recording) {
+                    stopRecording();
+                    recordingStatus.textContent = '3-minute limit reached.';
+                }
+            }, 3 * 60 * 1000);
+        } catch (err) {
+            console.error('Microphone error:', err);
+            recordingStatus.textContent = 'Error accessing microphone. Check permissions.';
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && recording) {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            recording = false;
+            recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
+            recordButton.classList.remove('recording');
+            recordingStatus.textContent = 'Recording stopped.';
+            clearInterval(timerInterval);
+            recordingTimer.style.display = 'none';
+        }
+    }
+
+    function updateTimer() {
+        recordingTime++;
+        const minutes = Math.floor(recordingTime / 60).toString().padStart(2, '0');
+        const seconds = (recordingTime % 60).toString().padStart(2, '0');
+        recordingTimer.textContent = `${minutes}:${seconds}`;
+    }
+
+    submitButton.addEventListener('click', () => {
+        if (!selectedAudioFile) {
+            alert('Please record or upload an audio file first.');
+            return;
+        }
+        loadingIndicator.style.display = 'block';
+        resultContainer.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('file', selectedAudioFile);
+
+        fetch('/process-audio', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingIndicator.style.display = 'none';
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            scoreValue.textContent = data.score;
+            levelValue.textContent = data.level;
+            scoreFill.style.width = data.score + '%';
+            scoreFill.textContent = data.score + '%';
+            transcribedText.textContent = data.transcribed_text;
+            correctedText.textContent = data.corrected_text || data.transcribed_text;
+            feedbackText.textContent = data.feedback;
+
+            if (data.tts_audio) {
+                const audioSrc = "data:audio/mp3;base64," + data.tts_audio;
+                ttsAudio.querySelector('source').src = audioSrc;
+                ttsAudio.load();
+                ttsAudio.play().catch(err => {
+                    console.warn("Autoplay failed:", err);
+                });
+            }
+
+            strengthsList.innerHTML = '';
+            data.strengths.forEach(strength => {
+                const li = document.createElement('li');
+                li.textContent = strength;
+                strengthsList.appendChild(li);
+            });
+
+            improvementsList.innerHTML = '';
+            data.areas_for_improvement.forEach(area => {
+                const li = document.createElement('li');
+                li.textContent = area;
+                improvementsList.appendChild(li);
+            });
+
+            resultContainer.style.display = 'block';
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            loadingIndicator.style.display = 'none';
+            alert('Server error: ' + error);
+        });
+    });
+
+    newRecordingButton.addEventListener('click', () => {
+        resultContainer.style.display = 'none';
+        audioPreview.style.display = 'none';
+        recordingStatus.textContent = '';
+        selectedFile.textContent = '';
+        submitButton.disabled = true;
+        selectedAudioFile = null;
+        if (audioURL) {
+            URL.revokeObjectURL(audioURL);
+            audioURL = null;
+        }
+        document.getElementById('recordTab').click();
+    });
+
+    const repeatTTSButton = document.getElementById('repeatTTSButton');
+    if (repeatTTSButton) {
+        repeatTTSButton.addEventListener('click', () => {
+            ttsAudio.currentTime = 0;
+            ttsAudio.play().catch(err => {
+                console.warn("Playback failed:", err);
+            });
+        });
+    }
+});
+</script>
     <footer class="mt-4">
         <p>© 2025 Spanish Learning Edge LLC</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const recordButton = document.getElementById('recordButton');
-            const submitButton = document.getElementById('submitButton');
-            const recordingStatus = document.getElementById('recordingStatus');
-            const recordingTimer = document.getElementById('recordingTimer');
-            const resultContainer = document.getElementById('resultContainer');
-            const scoreValue = document.getElementById('scoreValue');
-            const levelValue = document.getElementById('levelValue');
-            const scoreFill = document.getElementById('scoreFill');
-            const transcribedText = document.getElementById('transcribedText');
-            const correctedText = document.getElementById('correctedText');
-            const ttsAudio = document.getElementById('ttsAudio');
-            const feedbackText = document.getElementById('feedbackText');
-            const strengthsList = document.getElementById('strengthsList');
-            const improvementsList = document.getElementById('improvementsList');
-            const newRecordingButton = document.getElementById('newRecordingButton');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const fileInput = document.getElementById('fileInput');
-            const uploadArea = document.getElementById('uploadArea');
-            const selectedFile = document.getElementById('selectedFile');
-            const audioPreview = document.getElementById('audioPreview');
-            const recordedAudio = document.getElementById('recordedAudio');
-            
-            // Prompt modal elements
-            const beginnerPromptModal = document.getElementById('beginnerPromptModal');
-            const intermediatePromptModal = document.getElementById('intermediatePromptModal');
-            const advancedPromptModal = document.getElementById('advancedPromptModal');
-            const promptLinks = document.querySelectorAll('.prompt-link');
-            const closeModalButtons = document.querySelectorAll('.close-modal');
-
-            let mediaRecorder;
-            let audioChunks = [];
-            let recording = false;
-            let recordingTime = 0;
-            let timerInterval;
-            let selectedAudioFile = null;
-            let audioURL = null;
-
-            // Prompt modal functionality
-            promptLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const level = this.getAttribute('data-level');
-                    
-                    if (level === 'beginner') {
-                        beginnerPromptModal.style.display = 'block';
-                    } else if (level === 'intermediate') {
-                        intermediatePromptModal.style.display = 'block';
-                    } else if (level === 'advanced') {
-                        advancedPromptModal.style.display = 'block';
-                    }
-                });
-            });
-
-            closeModalButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    beginnerPromptModal.style.display = 'none';
-                    intermediatePromptModal.style.display = 'none';
-                    advancedPromptModal.style.display = 'none';
-                });
-            });
-
-            // Close modal when clicking outside
-            window.addEventListener('click', function(e) {
-                if (e.target === beginnerPromptModal) {
-                    beginnerPromptModal.style.display = 'none';
-                }
-                if (e.target === intermediatePromptModal) {
-                    intermediatePromptModal.style.display = 'none';
-                }
-                if (e.target === advancedPromptModal) {
-                    advancedPromptModal.style.display = 'none';
-                }
-            });
-
-            // Switch tabs
-            document.querySelectorAll('#recordingTabs a').forEach(tab => {
-                tab.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelectorAll('#recordingTabs a').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show', 'active'));
-                    this.classList.add('active');
-                    const target = document.querySelector(this.getAttribute('href'));
-                    target.classList.add('show', 'active');
-                    
-                    if (this.id === 'recordTab') {
-                        submitButton.disabled = !recording && !audioURL;
-                        selectedFile.textContent = '';
-                        selectedAudioFile = null;
-                    } else {
-                        // Upload tab
-                        submitButton.disabled = !selectedAudioFile;
-                        if (recording) stopRecording();
-                    }
-                });
-            });
-
-            // Upload area
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', e => {
-                e.preventDefault();
-                uploadArea.style.borderColor = 'var(--color-teal)';
-            });
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.style.borderColor = '#ccc';
-            });
-            uploadArea.addEventListener('drop', e => {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#ccc';
-                if (e.dataTransfer.files.length) {
-                    handleFileSelect(e.dataTransfer.files[0]);
-                }
-            });
-            fileInput.addEventListener('change', () => {
-                if (fileInput.files.length) {
-                    handleFileSelect(fileInput.files[0]);
-                }
-            });
-
-            function handleFileSelect(file) {
-                const validTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/opus', 'audio/webm', 'audio/ogg'];
-                const validExtensions = /\.(wav|mp3|m4a|opus|webm|ogg)$/i;
-                if (!validTypes.includes(file.type) && !file.name.match(validExtensions)) {
-                    alert('Please select a valid audio file.');
-                    return;
-                }
-                selectedAudioFile = file;
-                selectedFile.textContent = `Selected file: ${file.name}`;
-                submitButton.disabled = false;
-            }
-
-            // Recording
-            recordButton.addEventListener('click', () => {
-                if (!recording) {
-                    startRecording();
-                } else {
-                    stopRecording();
-                }
-            });
-            
-            async function startRecording() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.addEventListener('dataavailable', e => {
-                        audioChunks.push(e.data);
-                    });
-                    mediaRecorder.addEventListener('stop', () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        selectedAudioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
-                        if (audioURL) {
-                            URL.revokeObjectURL(audioURL);
-                        }
-                        audioURL = URL.createObjectURL(audioBlob);
-                        
-                        // Show audio in the preview
-                        recordedAudio.src = audioURL;
-                        audioPreview.style.display = 'block';
-                        
-                        submitButton.disabled = false;
-                    });
-                    mediaRecorder.start();
-                    recording = true;
-                    
-                    // Reset record button
-                    recordButton.innerHTML = '<i class="bi bi-stop-fill"></i> Stop Recording';
-                    recordButton.classList.add('recording');
-                    
-                    recordingStatus.textContent = 'Recording...';
-                    audioPreview.style.display = 'none';
-                    recordingTime = 0;
-                    recordingTimer.style.display = 'block';
-                    timerInterval = setInterval(updateTimer, 1000);
-                    // 3 min limit
-                    setTimeout(() => {
-                        if (recording) {
-                            stopRecording();
-                            recordingStatus.textContent = '3-minute limit reached.';
-                        }
-                    }, 3 * 60 * 1000);
-                } catch (err) {
-                    console.error('Microphone error:', err);
-                    recordingStatus.textContent = 'Error accessing microphone. Check permissions.';
-                }
-            }
-            
-            function stopRecording() {
-                if (mediaRecorder && recording) {
-                    mediaRecorder.stop();
-                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                    recording = false;
-                    
-                    // Reset record button
-                    recordButton.innerHTML = '<i class="bi bi-mic"></i> Start Recording';
-                    recordButton.classList.remove('recording');
-                    
-                    recordingStatus.textContent = 'Recording stopped.';
-                    clearInterval(timerInterval);
-                    recordingTimer.style.display = 'none';
-                }
-            }
-            
-            function updateTimer() {
-                recordingTime++;
-                const minutes = Math.floor(recordingTime / 60).toString().padStart(2, '0');
-                const seconds = (recordingTime % 60).toString().padStart(2, '0');
-                recordingTimer.textContent = `${minutes}:${seconds}`;
-            }
-
-            // Submit
-            submitButton.addEventListener('click', () => {
-                if (!selectedAudioFile) {
-                    alert('Please record or upload an audio file first.');
-                    return;
-                }
-                loadingIndicator.style.display = 'block';
-                resultContainer.style.display = 'none';
-
-                const formData = new FormData();
-                formData.append('file', selectedAudioFile);
-
-                fetch('/process-audio', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    loadingIndicator.style.display = 'none';
-                    if (data.error) {
-                        alert('Error: ' + data.error);
-                        return;
-                    }
-                    
-                    // Show score
-                    scoreValue.textContent = data.score;
-                    levelValue.textContent = data.level;
-                    scoreFill.style.width = data.score + '%';
-                    scoreFill.textContent = data.score + '%';
-                    
-                    // Show transcription
-                    transcribedText.textContent = data.transcribed_text;
-                    
-                    // Show corrected text
-                    correctedText.textContent = data.corrected_text || data.transcribed_text;
-                    
-                    // Set feedback text
-                    feedbackText.textContent = data.feedback;
-                    
-                   // TTS feedback audio
-if (data.tts_audio) {
-    const audioSrc = "data:audio/mp3;base64," + data.tts_audio;
-    ttsAudio.querySelector('source').src = audioSrc;
-    ttsAudio.load();
-    ttsAudio.play().catch(err => {
-        console.warn("Autoplay failed:", err);
-    });
-}
-                  
-                    // Strengths
-                    strengthsList.innerHTML = '';
-                    data.strengths.forEach(strength => {
-                        const li = document.createElement('li');
-                        li.textContent = strength;
-                        strengthsList.appendChild(li);
-                    });
-                    
-                    // Areas for improvement
-                    improvementsList.innerHTML = '';
-                    data.areas_for_improvement.forEach(area => {
-                        const li = document.createElement('li');
-                        li.textContent = area;
-                        improvementsList.appendChild(li);
-                    });
-                    
-                    resultContainer.style.display = 'block';
-                    resultContainer.scrollIntoView({ behavior: 'smooth' });
-                })
-                .catch(error => {
-                    loadingIndicator.style.display = 'none';
-                    alert('Server error: ' + error);
-                });
-// New recording
-newRecordingButton.addEventListener('click', () => {
-    resultContainer.style.display = 'none';
-    audioPreview.style.display = 'none';
-    recordingStatus.textContent = '';
-    selectedFile.textContent = '';
-    submitButton.disabled = true;
-    selectedAudioFile = null;
-    if (audioURL) {
-        URL.revokeObjectURL(audioURL);
-        audioURL = null;
-    }
-    document.getElementById('recordTab').click();
-});
-
-// Repeat pronunciation
-const repeatTTSButton = document.getElementById('repeatTTSButton');
-if (repeatTTSButton) {
-    repeatTTSButton.addEventListener('click', () => {
-        ttsAudio.currentTime = 0;
-        ttsAudio.play().catch(err => {
-            console.warn("Playback failed:", err);
-        });
-    });
-}
-}); 
-</script>
 </body>
 </html>
