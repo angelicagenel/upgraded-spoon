@@ -737,34 +737,32 @@ if (data.tts_audio) {
                     loadingIndicator.style.display = 'none';
                     alert('Server error: ' + error);
                 });
-            });
-
-            // New recording
-            newRecordingButton.addEventListener('click', () => {
-                resultContainer.style.display = 'none';
-                audioPreview.style.display = 'none';
-                recordingStatus.textContent = '';
-                selectedFile.textContent = '';
-                submitButton.disabled = true;
-                selectedAudioFile = null;
-                if (audioURL) {
-                    URL.revokeObjectURL(audioURL);
-                    audioURL = null;
-                }
-                document.getElementById('recordTab').click();
-            });
-        });
-            });
-    const repeatTTSButton = document.getElementById('repeatTTSButton');
-    if (repeatTTSButton) {
-        repeatTTSButton.addEventListener('click', () => {
-            ttsAudio.currentTime = 0;
-            ttsAudio.play().catch(err => {
-                console.warn("Playback failed:", err);
-            });
-        });
+// New recording
+newRecordingButton.addEventListener('click', () => {
+    resultContainer.style.display = 'none';
+    audioPreview.style.display = 'none';
+    recordingStatus.textContent = '';
+    selectedFile.textContent = '';
+    submitButton.disabled = true;
+    selectedAudioFile = null;
+    if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+        audioURL = null;
     }
+    document.getElementById('recordTab').click();
 });
+
+// Repeat pronunciation
+const repeatTTSButton = document.getElementById('repeatTTSButton');
+if (repeatTTSButton) {
+    repeatTTSButton.addEventListener('click', () => {
+        ttsAudio.currentTime = 0;
+        ttsAudio.play().catch(err => {
+            console.warn("Playback failed:", err);
+        });
+    });
+}
+}); 
 </script>
 </body>
 </html>
