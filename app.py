@@ -7,8 +7,10 @@ from flask import Flask, request, render_template, jsonify, send_file
 from google.cloud import speech
 from google.cloud import texttospeech
 from fuzzywuzzy import fuzz
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
