@@ -258,16 +258,16 @@
                     </li>
                 </ul>
             </div>
-            <div class="card-body">
-                <!-- Prompt Section - Added as per REQUEST #2 -->
-                <div class="prompt-section">
-                    <p class="prompt-title">Need inspiration? Click a level below for a prompt text:</p>
-                    <div class="prompt-links">
-                        <a href="#" class="prompt-link" data-level="beginner">Beginner</a>
-                        <a href="#" class="prompt-link" data-level="intermediate">Intermediate</a>
-                        <a href="#" class="prompt-link" data-level="advanced">Advanced</a>
-                    </div>
-                </div>
+           <div class="prompt-section mb-3">
+    <p class="prompt-title">Need inspiration? Click a level below:</p>
+    <div class="prompt-links mb-2">
+        <button class="btn btn-outline-primary btn-sm me-2" onclick="showPrompt('beginner')">Beginner</button>
+        <button class="btn btn-outline-warning btn-sm me-2" onclick="showPrompt('intermediate')">Intermediate</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="showPrompt('advanced')">Advanced</button>
+    </div>
+    <div id="promptDisplay" class="example-text" style="display: none;"></div>
+</div>
+
                 
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="record">
