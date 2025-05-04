@@ -346,6 +346,11 @@
                             <source src="" type="audio/mp3">
                             Your browser does not support audio playback.
                         </audio>
+                        <div class="text-center mt-2">
+    <button id="repeatTTSButton" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-volume-up"></i> Repeat Pronunciation
+    </button>
+</div>
                     </div>
                 </div>
             </div>
@@ -749,6 +754,17 @@ if (data.tts_audio) {
                 document.getElementById('recordTab').click();
             });
         });
-    </script>
+            });
+    const repeatTTSButton = document.getElementById('repeatTTSButton');
+    if (repeatTTSButton) {
+        repeatTTSButton.addEventListener('click', () => {
+            ttsAudio.currentTime = 0;
+            ttsAudio.play().catch(err => {
+                console.warn("Playback failed:", err);
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>
