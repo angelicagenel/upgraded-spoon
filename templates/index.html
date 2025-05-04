@@ -724,6 +724,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+function showPrompt(level) {
+    const promptDisplay = document.getElementById('promptDisplay');
+    let text = '';
+
+    if (level === 'beginner') {
+        text = `<strong>Beginner Prompt:</strong><br>Introduce yourself. Talk about your name, where you're from, your age, and interests.<br><em>Example:</em> Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. Me gusta leer y cocinar.`;
+    } else if (level === 'intermediate') {
+        text = `<strong>Intermediate Prompt:</strong><br>Describe your typical day or yesterday's routine. Mention your morning and evening activities.`;
+    } else if (level === 'advanced') {
+        text = `<strong>Advanced Prompt:</strong><br>Share your opinion on technology and education. Discuss benefits, challenges, and future trends.`;
+    }
+
+    promptDisplay.innerHTML = text;
+    promptDisplay.style.display = 'block';
+}
+</script>
+    
     <footer class="mt-4">
         <p>© 2025 Spanish Learning Edge LLC</p>
     </footer>
