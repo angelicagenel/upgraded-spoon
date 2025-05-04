@@ -55,7 +55,7 @@
 <body>
   <div class="container">
     <h1 class="text-center text-danger mb-3">Spanish Pronunciation Assessment</h1>
-    <p class="text-center">🎙️ Click "Start Recording", then speak in Spanish based on one of the prompts below.</p>
+    <p class="text-center">🎤 Click "Start Recording", then speak in Spanish based on one of the prompts below.</p>
 
     <!-- PROMPT BUTTONS -->
     <div class="text-center prompt-buttons mb-4">
@@ -134,81 +134,6 @@
       document.getElementById('promptExample').textContent = content.example;
       document.getElementById('promptContent').style.display = 'block';
     }
-
-    // Recording Logic
-    let mediaRecorder, audioChunks = [], audioBlob, audioURL;
-    const recordButton = document.getElementById('recordButton');
-    const submitButton = document.getElementById('submitButton');
-    const recordingStatus = document.getElementById('recordingStatus');
-    const recordingTimer = document.getElementById('recordingTimer');
-    const recordedAudio = document.getElementById('recordedAudio');
-    const audioPreview = document.getElementById('audioPreview');
-
-    let recording = false, seconds = 0, timer;
-
-    recordButton.onclick = async () => {
-      if (!recording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-          mediaRecorder.onstop = () => {
-            audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            audioURL = URL.createObjectURL(audioBlob);
-            recordedAudio.src = audioURL;
-            audioPreview.style.display = 'block';
-            submitButton.disabled = false;
-          };
-          mediaRecorder.start();
-          recording = true;
-          recordButton.textContent = 'Stop Recording';
-          recordButton.classList.add('recording');
-          recordingStatus.textContent = 'Recording...';
-          seconds = 0;
-          timer = setInterval(() => {
-            seconds++;
-            recordingTimer.textContent = `⏱️ ${Math.floor(seconds / 60)}:${('0' + (seconds % 60)).slice(-2)}`;
-          }, 1000);
-        } catch (err) {
-          alert('Microphone access denied.');
-        }
-      } else {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(t => t.stop());
-        recording = false;
-        recordButton.textContent = 'Start Recording';
-        recordButton.classList.remove('recording');
-        recordingStatus.textContent = 'Recording stopped.';
-        clearInterval(timer);
-      }
-    };
-
-    submitButton.onclick = () => {
-      const formData = new FormData();
-      formData.append('file', new File([audioBlob], 'recording.webm', { type: 'audio/webm' }));
-      document.getElementById('loadingIndicator').style.display = 'block';
-
-      fetch('/process-audio', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('loadingIndicator').style.display = 'none';
-        document.getElementById('resultContainer').style.display = 'block';
-        document.getElementById('scoreValue').textContent = data.score;
-        document.getElementById('levelValue').textContent = data.level;
-        document.getElementById('transcribedText').textContent = data.transcribed_text;
-        document.getElementById('correctedText').textContent = data.corrected_text;
-        document.getElementById('feedbackText').textContent = data.feedback;
-      })
-      .catch(err => {
-        document.getElementById('loadingIndicator').style.display = 'none';
-        alert('Error processing audio.');
-        console.error(err);
-      });
-    };
   </script>
 </body>
 </html>
