@@ -113,87 +113,93 @@
     </div>
   </div>
 
-  <script>
-    const recordButton = document.getElementById('recordButton');
-    const recordingStatus = document.getElementById('recordingStatus');
-    const recordedAudio = document.getElementById('recordedAudio');
+<script>
+  const recordButton = document.getElementById('recordButton');
+  const recordingStatus = document.getElementById('recordingStatus');
+  const recordedAudio = document.getElementById('recordedAudio');
 
-    let mediaRecorder;
-    let audioChunks = [];
-    let audioURL = null;
+  let mediaRecorder;
+  let audioChunks = [];
+  let audioURL = null;
 
-    recordButton.addEventListener('click', async () => {
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-          mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            if (audioURL) URL.revokeObjectURL(audioURL);
-            audioURL = URL.createObjectURL(audioBlob);
-            recordedAudio.src = audioURL;
-            recordedAudio.style.display = 'block';
-            recordingStatus.textContent = "Recording stopped.";
-          };
-          mediaRecorder.start();
-          recordButton.textContent = "Stop Recording";
-          recordingStatus.textContent = "Recording...";
-        } catch (err) {
-          alert("Microphone access denied or error: " + err.message);
-        }
-      } else if (mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        recordButton.textContent = "Start Recording";
+  recordButton.addEventListener('click', async () => {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          if (audioURL) URL.revokeObjectURL(audioURL);
+          audioURL = URL.createObjectURL(audioBlob);
+          recordedAudio.src = audioURL;
+          recordedAudio.style.display = 'block';
+          recordingStatus.textContent = "Recording stopped.";
+        };
+        mediaRecorder.start();
+        recordButton.textContent = "Stop Recording";
+        recordingStatus.textContent = "Recording...";
+      } catch (err) {
+        alert("Microphone access denied or error: " + err.message);
       }
-    });
-    document.getElementById('analyzeBtn').addEventListener('click', async () => {
-  if (!audioChunks.length) {
-    alert("Please record audio first.");
-    return;
-  }
-
-  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-  const formData = new FormData();
-  formData.append('file', new File([audioBlob], 'recording.webm'));
-
-  const response = await fetch('/process-audio', {
-    method: 'POST',
-    body: formData
+    } else if (mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      recordButton.textContent = "Start Recording";
+    }
   });
 
-  const data = await response.json();
-  if (data.error) {
-    alert("Error analyzing pronunciation: " + data.error);
-    return;
-  }
+  // ✅ Aquí está el PASO 2: envío de audio al backend
+  document.getElementById('analyzeBtn').addEventListener('click', async () => {
+    if (!audioChunks.length) {
+      alert("Please record audio first.");
+      return;
+    }
 
-  document.getElementById('score').textContent = data.score;
-  document.getElementById('level').textContent = data.level;
-  document.getElementById('feedbackText').textContent = data.feedback;
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const formData = new FormData();
+    formData.append('file', new File([audioBlob], 'recording.webm'));  // <-- nombre clave para Flask
 
-  // List strengths
-  const strengthsList = document.getElementById('strengthsList');
-  strengthsList.innerHTML = "";
-  data.strengths.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item;
-    strengthsList.appendChild(li);
+    try {
+      const response = await fetch('/process-audio', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert("Error analyzing pronunciation: " + data.error);
+        return;
+      }
+
+      document.getElementById('score').textContent = data.score;
+      document.getElementById('level').textContent = data.level;
+      document.getElementById('feedbackText').textContent = data.feedback;
+
+      const strengthsList = document.getElementById('strengthsList');
+      strengthsList.innerHTML = "";
+      data.strengths.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        strengthsList.appendChild(li);
+      });
+
+      const improvementsList = document.getElementById('improvementsList');
+      improvementsList.innerHTML = "";
+      data.areas_for_improvement.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        improvementsList.appendChild(li);
+      });
+
+      document.getElementById('feedbackSection').style.display = 'block';
+
+    } catch (err) {
+      alert("Unexpected error: " + err.message);
+    }
   });
+</script>
 
-  // List improvements
-  const improvementsList = document.getElementById('improvementsList');
-  improvementsList.innerHTML = "";
-  data.areas_for_improvement.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item;
-    improvementsList.appendChild(li);
-  });
-
-  document.getElementById('feedbackSection').style.display = 'block';
-});
-
-  </script>
 </body>
 </html>
