@@ -63,5 +63,4 @@ gcloud run deploy spanish-pronunciation-tool \
   --source . \
   --platform managed \
   --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars="BUCKET_NAME=upgraded-spoon-bucket"
+  --allow-unauthenticated
