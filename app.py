@@ -473,7 +473,7 @@ def process_audio():
             "feedback": assessment['feedback'],
             "strengths": assessment['strengths'],
             "areas_for_improvement": assessment['areas_for_improvement'],
-            "tts_audio_url": tts_url
+            "tts_audio": base64.b64encode(tts_url).decode('utf-8') if tts_url else None
         }
         
         # Add practice-specific fields if applicable
