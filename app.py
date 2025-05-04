@@ -7,10 +7,8 @@ from flask import Flask, request, render_template, jsonify, send_file
 from google.cloud import speech
 from google.cloud import texttospeech
 from fuzzywuzzy import fuzz
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -44,9 +42,9 @@ def load_references():
     except Exception as e:
         logger.error(f"Error loading references: {e}")
         return {
-            "beginner": "Hola, ¿cómo estás?",
-            "intermediate": "Me gusta viajar y conocer nuevas culturas.",
-            "advanced": "La educación es fundamental para el desarrollo de la sociedad."
+            "beginner": "Hola, ¿cómo estás? Espero que estés teniendo un buen día.",
+            "intermediate": "Los bomberos llegaron rápidamente al lugar del incendio.",
+            "advanced": "En caso de emergencia, mantenga la calma y siga las instrucciones de seguridad."
         }
 
 SPANISH_DICT = load_dictionary()
@@ -69,7 +67,6 @@ def transcribe_audio(audio_content):
 
 
 def generate_corrected_text(text):
-    # Placeholder function (returns same text)
     return text
 
 
@@ -166,3 +163,4 @@ def process_audio():
 
 if __name__ == '__main__':
     app.run(debug=True, port=int(os.environ.get('PORT', 8080)))
+
