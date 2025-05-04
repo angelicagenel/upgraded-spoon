@@ -405,18 +405,13 @@ def generate_tts_feedback(text, level):
 @app.route('/')
 def home():
     return render_template('index.html')
-
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    bucket_status = "connected" if bucket else "not connected"
     return jsonify({
         "status": "ok",
-        "bucket": bucket_status,
-        "bucket_name": BUCKET_NAME,
         "dictionary_size": len(SPANISH_DICT)
     })
-
 @app.route('/process-audio', methods=['POST'])
 def process_audio():
     """Process uploaded or recorded audio and provide assessment"""
