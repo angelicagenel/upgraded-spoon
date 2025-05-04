@@ -7,133 +7,132 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
+      background-color: #fdecee;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8ebec;
-      padding: 40px 0;
     }
     .container {
-      background: white;
-      border-radius: 12px;
-      max-width: 750px;
-      margin: auto;
+      max-width: 700px;
+      margin: 40px auto;
+      background-color: white;
       padding: 30px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #ef7c8e;
+      color: white;
+      padding: 20px;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      text-align: center;
     }
     .btn-record {
       background-color: #db6565;
       color: white;
     }
-    .btn-record.recording {
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    .prompt-buttons button {
-      margin: 5px;
-    }
-    .modal-content {
+    .prompt-section {
+      background-color: #ffe8e3;
       padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .prompt-section h5 {
+      color: #a5161b;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .prompt-section .prompt-title {
+      font-weight: bold;
+      margin-top: 20px;
     }
     .example-text {
-      background: #fff7f5;
+      background-color: #fff7f5;
       padding: 15px;
-      border-left: 4px solid #db6565;
-      margin-top: 15px;
+      border-left: 4px solid #a5161b;
+      margin-top: 10px;
       border-radius: 5px;
-    }
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 0.9rem;
-      color: #777;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 class="text-center text-danger mb-3">Spanish Pronunciation Assessment</h1>
-    <p class="text-center">🎤 Click "Start Recording", then speak in Spanish based on one of the prompts below.</p>
-
-    <!-- PROMPT BUTTONS -->
-    <div class="text-center prompt-buttons mb-4">
-      <button class="btn btn-outline-primary" onclick="showPrompt('beginner')">Beginner</button>
-      <button class="btn btn-outline-warning" onclick="showPrompt('intermediate')">Intermediate</button>
-      <button class="btn btn-outline-danger" onclick="showPrompt('advanced')">Advanced</button>
+    <div class="header">
+      <h2>Spanish Pronunciation Assessment</h2>
+      <p>Record Spanish audio to get detailed pronunciation feedback</p>
     </div>
 
-    <div id="promptContent" style="display:none;">
-      <h4 id="promptTitle"></h4>
-      <p id="promptIdeas"></p>
-      <p class="example-text" id="promptExample"></p>
-    </div>
+    <!-- Prompts -->
+    <div class="prompt-section">
+      <h5>Need inspiration? Choose a level:</h5>
 
-    <!-- RECORDING BUTTON -->
-    <div class="text-center my-4">
-      <button id="recordButton" class="btn btn-record">
-        <i class="bi bi-mic"></i> Start Recording
-      </button>
-      <p id="recordingStatus" class="mt-2 text-muted"></p>
-      <div id="recordingTimer" class="mt-2"></div>
-    </div>
-
-    <div id="audioPreview" class="mb-3" style="display:none;">
-      <h6>Preview:</h6>
-      <audio id="recordedAudio" controls class="w-100"></audio>
-    </div>
-
-    <div class="d-grid gap-2">
-      <button id="submitButton" class="btn btn-success" disabled>Analyze Pronunciation</button>
-    </div>
-
-    <div id="loadingIndicator" class="text-center my-4" style="display: none;">
-      <div class="spinner-border text-danger" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <div class="prompt-title">Beginner Prompt:</div>
+      <p>Introduce yourself. Include your name, where you're from, age, and interests.</p>
+      <div class="example-text">
+        Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. Hablo inglés y estoy aprendiendo español. Me gusta leer, cocinar y pasar tiempo con mis amigos.
       </div>
-      <p>Analyzing your pronunciation... Please wait.</p>
+
+      <div class="prompt-title">Intermediate Prompt:</div>
+      <p>Describe your typical day or what you did yesterday. Include your morning routine, people you met, and how you felt.</p>
+      <div class="example-text">
+        Ayer me desperté a las siete de la mañana. Tomé café y desayuné con mi familia. Luego fui a trabajar y tuve una reunión importante. Almorcé con mi amigo Juan y regresé a casa por la tarde. Estaba cansado pero contento.
+      </div>
+
+      <div class="prompt-title">Advanced Prompt:</div>
+      <p>Share your opinion about technology and education. Mention benefits, challenges, and future ideas.</p>
+      <div class="example-text">
+        En mi opinión, la tecnología ha transformado la educación. Es útil para aprender a nuestro ritmo, pero también puede causar distracción. Creo que el futuro será una combinación de clases presenciales y en línea, y debemos preparar mejor a los profesores.
+      </div>
     </div>
 
-    <!-- RESULTS SECTION -->
-    <div id="resultContainer" class="mt-4" style="display:none;">
-      <h3 class="text-center mb-3">Results</h3>
-      <p><strong>Score:</strong> <span id="scoreValue">0</span>%</p>
-      <p><strong>ACTFL Level:</strong> <span id="levelValue">Novice</span></p>
-      <p><strong>Transcription:</strong> <span id="transcribedText"></span></p>
-      <p><strong>Corrected Version:</strong> <span id="correctedText"></span></p>
-      <p><strong>Feedback:</strong> <span id="feedbackText"></span></p>
+    <!-- Recording Section -->
+    <div class="text-center">
+      <p>🎤 Speak freely in Spanish to get a pronunciation assessment.</p>
+      <button id="recordButton" class="btn btn-record"><i class="bi bi-mic"></i> Start Recording</button>
+      <p id="recordingStatus" class="mt-2"></p>
+      <audio id="recordedAudio" controls style="display:none;" class="mt-3 w-100"></audio>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-5">
+      <p>© 2025 Spanish Learning Edge LLC</p>
     </div>
   </div>
 
-  <footer>© 2025 Spanish Learning Edge LLC</footer>
-
   <script>
-    const prompts = {
-      beginner: {
-        title: "Beginner Prompt",
-        ideas: "Introduce yourself: your name, where you're from, your age, and your hobbies.",
-        example: "Hola, me llamo María y soy de California. Tengo veinticinco años y soy estudiante. Me gusta leer, cocinar, y pasar tiempo con mis amigos."
-      },
-      intermediate: {
-        title: "Intermediate Prompt",
-        ideas: "Describe your typical day or yesterday’s routine. Mention your morning, tasks, and feelings.",
-        example: "Ayer me desperté a las siete. Tomé un café, trabajé todo el día y cené con mi familia. Estaba cansado pero contento."
-      },
-      advanced: {
-        title: "Advanced Prompt",
-        ideas: "Talk about technology in education. Mention benefits, challenges, and your experiences.",
-        example: "La tecnología ha cambiado la educación. Ahora es más accesible, pero también puede distraer. Creo que el futuro será híbrido."
-      }
-    };
+    const recordButton = document.getElementById('recordButton');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const recordedAudio = document.getElementById('recordedAudio');
 
-    function showPrompt(level) {
-      const content = prompts[level];
-      document.getElementById('promptTitle').textContent = content.title;
-      document.getElementById('promptIdeas').textContent = content.ideas;
-      document.getElementById('promptExample').textContent = content.example;
-      document.getElementById('promptContent').style.display = 'block';
-    }
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioURL = null;
+
+    recordButton.addEventListener('click', async () => {
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            if (audioURL) URL.revokeObjectURL(audioURL);
+            audioURL = URL.createObjectURL(audioBlob);
+            recordedAudio.src = audioURL;
+            recordedAudio.style.display = 'block';
+            recordingStatus.textContent = "Recording stopped.";
+          };
+          mediaRecorder.start();
+          recordButton.textContent = "Stop Recording";
+          recordingStatus.textContent = "Recording...";
+        } catch (err) {
+          alert("Microphone access denied or error: " + err.message);
+        }
+      } else if (mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        recordButton.textContent = "Start Recording";
+      }
+    });
   </script>
 </body>
 </html>
