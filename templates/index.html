@@ -90,6 +90,21 @@
       <button id="recordButton" class="btn btn-record"><i class="bi bi-mic"></i> Start Recording</button>
       <p id="recordingStatus" class="mt-2"></p>
       <audio id="recordedAudio" controls style="display:none;" class="mt-3 w-100"></audio>
+      <!-- Analyze Button -->
+<div class="text-center mt-3">
+  <button id="analyzeBtn" class="btn btn-success">Analyze Pronunciation</button>
+</div>
+
+<!-- Feedback Results -->
+<div id="feedbackSection" style="display:none;" class="mt-4">
+  <h5>Feedback:</h5>
+  <p><strong>Score:</strong> <span id="score"></span></p>
+  <p><strong>Level:</strong> <span id="level"></span></p>
+  <p><strong>Feedback:</strong> <span id="feedbackText"></span></p>
+  <p><strong>Strengths:</strong> <ul id="strengthsList"></ul></p>
+  <p><strong>Areas for Improvement:</strong> <ul id="improvementsList"></ul></p>
+</div>
+
     </div>
 
     <!-- Footer -->
@@ -133,6 +148,52 @@
         recordButton.textContent = "Start Recording";
       }
     });
+    document.getElementById('analyzeBtn').addEventListener('click', async () => {
+  if (!audioChunks.length) {
+    alert("Please record audio first.");
+    return;
+  }
+
+  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+  const formData = new FormData();
+  formData.append('file', new File([audioBlob], 'recording.webm'));
+
+  const response = await fetch('/process-audio', {
+    method: 'POST',
+    body: formData
+  });
+
+  const data = await response.json();
+  if (data.error) {
+    alert("Error analyzing pronunciation: " + data.error);
+    return;
+  }
+
+  document.getElementById('score').textContent = data.score;
+  document.getElementById('level').textContent = data.level;
+  document.getElementById('feedbackText').textContent = data.feedback;
+
+  // List strengths
+  const strengthsList = document.getElementById('strengthsList');
+  strengthsList.innerHTML = "";
+  data.strengths.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    strengthsList.appendChild(li);
+  });
+
+  // List improvements
+  const improvementsList = document.getElementById('improvementsList');
+  improvementsList.innerHTML = "";
+  data.areas_for_improvement.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    improvementsList.appendChild(li);
+  });
+
+  document.getElementById('feedbackSection').style.display = 'block';
+});
+
   </script>
 </body>
 </html>
